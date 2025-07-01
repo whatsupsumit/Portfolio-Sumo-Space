@@ -12,191 +12,316 @@ const Index = () => {
   const [showEducation, setShowEducation] = useState(false);
   const [showExperience, setShowExperience] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    // Apply theme class to document
+    // Apply theme class to document with smooth transition
+    document.documentElement.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
     document.documentElement.classList.toggle("light-theme", theme === "light");
     document.documentElement.classList.toggle("dark-theme", theme === "dark");
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setIsTransitioning(true);
+    
+    // Create a smooth fade transition effect
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: ${theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)"};
+      z-index: 9999;
+      opacity: 0;
+      backdrop-filter: blur(5px);
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Trigger overlay fade in
+    setTimeout(() => {
+      overlay.style.opacity = '1';
+    }, 10);
+    
+    // Change theme during peak opacity
+    setTimeout(() => {
+      setTheme(theme === "dark" ? "light" : "dark");
+    }, 200);
+    
+    // Fade out overlay and cleanup
+    setTimeout(() => {
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+        setIsTransitioning(false);
+      }, 400);
+    }, 400);
   };
 
   return (
-    <div className={`min-h-screen ${theme === "dark" 
-        ? "bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white" 
-        : "bg-gradient-to-br from-pink-25 via-rose-25 to-pink-50 text-gray-900"} 
-      overflow-x-hidden transition-colors duration-300 relative`}
+    <div 
+      className={`min-h-screen relative overflow-x-hidden`}
       style={{
-        background: theme === "light" 
-          ? "linear-gradient(135deg, #fdf2f8 0%, #fef7f7 25%, #fff1f2 50%, #fdf2f8 75%, rgb(249, 215, 224) 100%)"
-          : undefined
-      }}>
+        background: theme === "dark" 
+          ? "linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #1a1a2e 75%, #000000 100%)"
+          : "linear-gradient(135deg, #fdf2f8 0%, #fef7f7 25%, #fff1f2 50%, #fdf2f8 75%, rgb(249, 215, 224) 100%)",
+        color: theme === "dark" ? "#ffffff" : "#111827",
+        transition: "all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+      }}
+    >
       
-      {/* Light mode background effects */}
-      {theme === "light" && (
-        <>
-          {/* Simple light background overlay */}
-          <div className="fixed inset-0 bg-gradient-to-br from-white/20 via-pink-50/10 to-rose-50/15 backdrop-blur-[0.5px] pointer-events-none"></div>
-        </>
-      )}
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Light mode floating elements */}
+        {theme === "light" && (
+          <>
+            <div 
+              className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full opacity-20 animate-float"
+              style={{
+                background: "radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 70%)",
+                filter: "blur(20px)",
+                animation: "float 8s ease-in-out infinite"
+              }}
+            ></div>
+            <div 
+              className="absolute top-3/4 right-1/4 w-24 h-24 rounded-full opacity-15 animate-float"
+              style={{
+                background: "radial-gradient(circle, rgba(219, 39, 119, 0.4) 0%, transparent 70%)",
+                filter: "blur(15px)",
+                animation: "float 6s ease-in-out infinite reverse"
+              }}
+            ></div>
+          </>
+        )}
+        
+        {/* Dark mode floating elements */}
+        {theme === "dark" && (
+          <>
+            <div 
+              className="absolute top-1/3 right-1/3 w-40 h-40 rounded-full opacity-10 animate-float"
+              style={{
+                background: "radial-gradient(circle, #ff00ff 0%, transparent 70%)",
+                filter: "blur(30px)",
+                animation: "float 10s ease-in-out infinite"
+              }}
+            ></div>
+            <div 
+              className="absolute bottom-1/4 left-1/3 w-28 h-28 rounded-full opacity-15 animate-float"
+              style={{
+                background: "radial-gradient(circle, #00ffff 0%, transparent 70%)",
+                filter: "blur(25px)",
+                animation: "float 7s ease-in-out infinite reverse"
+              }}
+            ></div>
+          </>
+        )}
+      </div>
       
-      {/* Theme Toggle Button - Fixed in the top right corner */}
+      {/* Theme Toggle Button with Enhanced Animation */}
       <div className="fixed top-4 right-4 z-50">
         <Button
           variant="outline"
           size="icon"
           onClick={toggleTheme}
-          className={`rounded-full w-10 h-10 ${theme === "dark" 
-            ? "bg-gray-800/80 border-neon-pink/50 text-neon-pink hover:bg-neon-pink hover:text-black" 
-            : "bg-white/90 border-pink-500/50 text-pink-600 hover:bg-pink-500 hover:text-white shadow-lg shadow-pink-500/20"} 
-            backdrop-blur-sm transition-all duration-150`}
+          disabled={isTransitioning}
+          className={`rounded-full w-12 h-12 relative overflow-hidden group ${theme === "dark" 
+            ? "bg-gray-800/90 border-neon-pink/60 text-neon-pink hover:bg-neon-pink/20 hover:border-neon-pink" 
+            : "bg-white/95 border-pink-500/60 text-pink-600 hover:bg-pink-500/20 hover:border-pink-500 shadow-lg shadow-pink-500/25"} 
+            backdrop-blur-md transition-all duration-500 hover:scale-110`}
+          style={{
+            transform: isTransitioning ? "scale(1.2) rotate(180deg)" : "scale(1) rotate(0deg)",
+            transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)"
+          }}
           aria-label="Toggle theme"
         >
-          {theme === "dark" ? (
-            <Sun className="h-[1.2rem] w-[1.2rem]" />
-          ) : (
-            <Moon className="h-[1.2rem] w-[1.2rem]" />
+          {/* Animated background ripple */}
+          <div className={`absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+            theme === "dark" 
+              ? "bg-gradient-to-br from-neon-pink/20 to-neon-purple/20" 
+              : "bg-gradient-to-br from-pink-500/20 to-rose-500/20"
+          }`}></div>
+          
+          {/* Icon container with smooth transitions */}
+          <div className="relative z-10 flex items-center justify-center">
+            <Sun 
+              className={`absolute h-[1.4rem] w-[1.4rem] transition-all duration-500 ${
+                theme === "light" ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+              }`} 
+            />
+            <Moon 
+              className={`absolute h-[1.4rem] w-[1.4rem] transition-all duration-500 ${
+                theme === "dark" ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+              }`} 
+            />
+          </div>
+          
+          {/* Pulse effect when transitioning */}
+          {isTransitioning && (
+            <div className={`absolute inset-0 rounded-full animate-ping ${
+              theme === "dark" ? "bg-neon-pink/30" : "bg-pink-500/30"
+            }`}></div>
           )}
         </Button>
       </div>
 
-      {/* Hero Section - Full height to be visible on first load */}
-      <section className={`min-h-[100vh] flex items-center container mx-auto px-4 py-20 md:py-32 relative ${
-        theme === "light" ? "backdrop-blur-sm" : ""
-      }`}>
+      {/* Hero Section with smooth background transitions */}
+      <section 
+        className={`min-h-[100vh] flex items-center container mx-auto px-4 py-20 md:py-32 relative`}
+        style={{
+          transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)"
+        }}
+      >
         
         <div className="grid lg:grid-cols-2 gap-12 items-center w-full relative z-10">
-          {/* Left side - Avatar with Sumit.dev text */}
+          {/* Left side - Avatar with enhanced animations */}
           <div className="flex flex-col justify-center items-center space-y-6">
-            {/* Container for both avatar and text with slight left offset */}
             <div className="flex flex-col items-center space-y-4 lg:-translate-x-8">
-              {/* Avatar - Centered */}
               <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
-              <img
-                src="/avatar.png"
-                alt="Sumit Kumar Avatar"
-                className={`absolute inset-0 w-full h-full object-cover animate-float border-4 ${
-                  theme === "dark" ? "border-neon-pink" : "border-pink-500"
+                <img
+                  src="/avatar.png"
+                  alt="Sumit Kumar Avatar"
+                  className={`absolute inset-0 w-full h-full object-cover animate-float border-4 transition-all duration-1000 ${
+                    theme === "dark" ? "border-neon-pink" : "border-pink-500"
+                  }`}
+                  style={{
+                    boxShadow: theme === "dark"
+                      ? "0 0 40px 10px #ff00ff80, 0 0 80px 20px #00ffff40, 0 0 0 8px #1a1a2e inset"
+                      : "0 0 30px 8px rgba(236, 72, 153, 0.4), 0 0 60px 15px rgba(219, 39, 119, 0.2), 0 0 0 8px rgba(252, 231, 243, 0.9) inset, inset 0 0 0 4px rgba(236, 72, 153, 0.15)",
+                    background: theme === "dark" 
+                      ? "black" 
+                      : "linear-gradient(135deg, rgba(252, 231, 243, 0.8) 0%, rgba(251, 207, 232, 0.6) 50%, rgba(250, 182, 217, 0.4) 100%)",
+                    objectPosition: "center center",
+                    borderRadius: "30%",
+                    filter: isTransitioning ? "blur(2px)" : "blur(0px)",
+                    transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)"
+                  }}
+                />
+                
+                {/* Enhanced glow effect */}
+                <div
+                  className={`absolute inset-0 border-4 animate-pulse transition-all duration-1000 ${
+                    theme === "dark" ? "border-neon-pink/50" : "border-pink-500/60"
+                  }`}
+                  style={{ 
+                    borderRadius: "30%",
+                    opacity: isTransitioning ? 0.3 : 1
+                  }}
+                ></div>
+                
+                <div
+                  className="absolute inset-0 pointer-events-none transition-all duration-1000"
+                  style={{
+                    boxShadow: theme === "dark"
+                      ? "0 0 60px 20px #ff00ff55, 0 0 120px 40px #00ffff33"
+                      : "0 0 40px 15px rgba(236, 72, 153, 0.3), 0 0 80px 25px rgba(219, 39, 119, 0.15)",
+                    borderRadius: "30%",
+                    opacity: isTransitioning ? 0.5 : 1
+                  }}
+                ></div>
+              </div>
+            
+              <h3 
+                className={`text-xl md:text-2xl lg:text-3xl font-michroma font-bold transition-all duration-1000 ${
+                  theme === "dark" 
+                    ? "bg-gradient-to-r from-white via-neon-pink to-neon-blue bg-clip-text text-transparent" 
+                    : "bg-gradient-to-r from-gray-800 via-pink-600 to-rose-600 bg-clip-text text-transparent"
                 }`}
                 style={{
-                  boxShadow: theme === "dark"
-                    ? "0 0 40px 10px #ff00ff80, 0 0 80px 20px #00ffff40, 0 0 0 8px #1a1a2e inset"
-                    : "0 0 30px 8px rgba(236, 72, 153, 0.4), 0 0 60px 15px rgba(219, 39, 119, 0.2), 0 0 0 8px rgba(252, 231, 243, 0.9) inset, inset 0 0 0 4px rgba(236, 72, 153, 0.15)",
-                  background: theme === "dark" 
-                    ? "black" 
-                    : "linear-gradient(135deg, rgba(252, 231, 243, 0.8) 0%, rgba(251, 207, 232, 0.6) 50%, rgba(250, 182, 217, 0.4) 100%)",
-                  objectPosition: "center center",
-                  borderRadius: "30%",
+                  textShadow: theme === "dark" 
+                    ? "0 0 20px rgba(255, 0, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.3)"
+                    : "0 0 15px rgba(236, 72, 153, 0.4), 0 0 25px rgba(219, 39, 119, 0.2)",
+                  filter: isTransitioning ? "blur(1px)" : "blur(0px)"
                 }}
-              />
-              <div
-                className={`absolute inset-0 border-4 ${
-                  theme === "dark" ? "border-neon-pink/50" : "border-pink-500/60"
-                } animate-neon-pulse pointer-events-none`}
-                style={{ borderRadius: "30%" }}
-              ></div>
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  boxShadow: theme === "dark"
-                    ? "0 0 60px 20px #ff00ff55, 0 0 120px 40px #00ffff33"
-                    : "0 0 40px 15px rgba(236, 72, 153, 0.3), 0 0 80px 25px rgba(219, 39, 119, 0.15)",
-                  borderRadius: "30%",
-                }}
-              ></div>
+              >
+                Sumit.dev
+              </h3>
             </div>
-            
-            {/* Sumit.dev Text - Positioned below avatar */}
-            <h3 className={`text-xl md:text-2xl lg:text-3xl font-michroma font-bold ${
-              theme === "dark" 
-                ? "bg-gradient-to-r from-white via-neon-pink to-neon-blue bg-clip-text text-transparent" 
-                : "bg-gradient-to-r from-gray-800 via-pink-600 to-rose-600 bg-clip-text text-transparent"
-            }`}
-            style={{
-              textShadow: theme === "dark" 
-                ? "0 0 20px rgba(255, 0, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.3)"
-                : "0 0 15px rgba(236, 72, 153, 0.4), 0 0 25px rgba(219, 39, 119, 0.2)"
-            }}>
-              Sumit.dev
-            </h3>
           </div>
-        </div>
 
-          {/* Right side - Content */}
-          <div className="text-center lg:text-left space-y-8">
-            <h1 className={`text-4xl md:text-6xl lg:text-7xl font-michroma font-bold leading-tight ${
-              theme === "light" ? "text-gray-900" : ""
+          {/* Right side - Content with smooth transitions */}
+          <div 
+            className="text-center lg:text-left space-y-8"
+            style={{
+              transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+              filter: isTransitioning ? "blur(1px)" : "blur(0px)"
+            }}
+          >
+            <h1 className={`text-4xl md:text-6xl lg:text-7xl font-michroma font-bold leading-tight transition-colors duration-1000 ${
+              theme === "light" ? "text-gray-900" : "text-white"
             }`}>
               Hi, I'm
               <br />
-              <span className={`${theme === "dark" 
+              <span className={`transition-all duration-1000 ${theme === "dark" 
                 ? "bg-gradient-to-r from-neon-pink to-neon-blue" 
                 : "bg-gradient-to-r from-pink-600 to-rose-600"} bg-clip-text text-transparent`}>
                 Sumit Kumar
               </span>
               <br />
-              <span className={`text-3xl md:text-4xl lg:text-5xl ${
+              <span className={`text-3xl md:text-4xl lg:text-5xl transition-colors duration-1000 ${
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
               }`}>
                 Full Stack Developer
               </span>
             </h1>
 
+            {/* Enhanced buttons with smooth transitions */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 ${theme === "dark" 
-                  ? "border-neon-pink bg-transparent text-neon-pink hover:bg-neon-pink" 
-                  : "border-pink-500 bg-transparent text-pink-600 hover:bg-pink-500 shadow-lg shadow-pink-500/20"} 
-                  hover:text-${theme === "dark" ? "black" : "white"} transition-all duration-150 font-semibold relative overflow-hidden group`}
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                  ? "border-neon-pink bg-transparent text-neon-pink hover:bg-neon-pink hover:text-black" 
+                  : "border-pink-500 bg-transparent text-pink-600 hover:bg-pink-500 hover:text-white shadow-lg shadow-pink-500/20"} 
+                  font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
                 onClick={() => {
                   document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
                 <span className="relative z-10">View Projects</span>
-                <div className={`absolute inset-0 ${theme === "dark" 
+                <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
                   ? "bg-gradient-to-r from-neon-pink/20 to-neon-purple/20"
                   : "bg-gradient-to-r from-pink-500/20 to-rose-500/20"
-                } opacity-0 group-hover:opacity-100 transition-opacity duration-150`}></div>
+                } opacity-0 group-hover:opacity-100`}></div>
               </Button>
 
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 ${theme === "dark" 
-                  ? "border-neon-blue bg-transparent text-neon-blue hover:bg-neon-blue" 
-                  : "border-rose-500 bg-transparent text-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-500/20"} 
-                  hover:text-${theme === "dark" ? "black" : "white"} transition-all duration-150 font-semibold relative overflow-hidden group`}
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                  ? "border-neon-blue bg-transparent text-neon-blue hover:bg-neon-blue hover:text-black" 
+                  : "border-rose-500 bg-transparent text-rose-600 hover:bg-rose-500 hover:text-white shadow-lg shadow-rose-500/20"} 
+                  font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
                 asChild
               >
                 <a href="https://drive.google.com/file/d/1CYsUqzBHIyLuik6GyhgyH2tdAvKsMB-O/view?usp=drive_link" target="_blank" rel="noopener noreferrer">
                   <span className="relative z-10">Download Resume</span>
-                  <div className={`absolute inset-0 ${theme === "dark" 
+                  <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
                     ? "bg-gradient-to-r from-neon-blue/20 to-neon-cyan/20"
                     : "bg-gradient-to-r from-rose-500/20 to-pink-500/20"
-                  } opacity-0 group-hover:opacity-100 transition-opacity duration-150`}></div>
+                  } opacity-0 group-hover:opacity-100`}></div>
                 </a>
               </Button>
 
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 ${theme === "dark" 
-                  ? "border-neon-purple bg-transparent text-neon-purple hover:bg-neon-purple" 
-                  : "border-pink-600 bg-transparent text-pink-700 hover:bg-pink-600 shadow-lg shadow-pink-600/20"} 
-                  hover:text-${theme === "dark" ? "black" : "white"} transition-all duration-150 font-semibold relative overflow-hidden group`}
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                  ? "border-neon-purple bg-transparent text-neon-purple hover:bg-neon-purple hover:text-black" 
+                  : "border-pink-600 bg-transparent text-pink-700 hover:bg-pink-600 hover:text-white shadow-lg shadow-pink-600/20"} 
+                  font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
                 onClick={() => {
                   document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
                 <span className="relative z-10">Hire Me</span>
-                <div className={`absolute inset-0 ${theme === "dark" 
+                <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
                   ? "bg-gradient-to-r from-neon-purple/20 to-neon-pink/20"
                   : "bg-gradient-to-r from-pink-600/20 to-rose-600/20"
-                } opacity-0 group-hover:opacity-100 transition-opacity duration-150`}></div>
+                } opacity-0 group-hover:opacity-100`}></div>
               </Button>
             </div>
           </div>
@@ -341,8 +466,8 @@ const Index = () => {
                             </h4>
                             <p className={`${
                               theme === "dark" 
-                                ? "text-neon-cyan group-hover/item:text-neon-blue" 
-                                : "text-pink-600 group-hover/item:text-rose-600"
+                                ? "text-neon-cyan group-hover:item:text-neon-blue" 
+                                : "text-pink-600 group-hover:item:text-rose-600"
                             } font-medium transition-colors`}>
                               Computer Science & Engineering
                             </p>
@@ -377,8 +502,8 @@ const Index = () => {
                             </h4>
                             <p className={`${
                               theme === "dark" 
-                                ? "text-neon-cyan group-hover/item:text-neon-blue" 
-                                : "text-pink-600 group-hover/item:text-rose-600"
+                                ? "text-neon-cyan group-hover:item:text-neon-blue" 
+                                : "text-pink-600 group-hover:item:text-rose-600"
                             } font-medium transition-colors`}>
                               Science (PCM)
                             </p>
@@ -809,59 +934,532 @@ const Index = () => {
           <span className={`${theme === "dark" 
             ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
             : "bg-gradient-to-r from-pink-600 to-rose-600"} bg-clip-text text-transparent`}>
-            Projects
+            Featured Projects
           </span>
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { title: "Project One", tech: ["React", "NodeJS", "AWS"] },
-            { title: "Project Two", tech: ["React", "AWS", "MongoDB"] },
-            { title: "Project Three", tech: ["Express", "AWS", "PostgreSQL"] },
-            { title: "Project Four", tech: ["Next.js", "TypeScript", "AWS"] },
-          ].map((project, index) => (
-            <Card
-              key={index}
-              className={`${
-                theme === "dark" 
-                  ? "bg-gray-800/50 border-gray-700 hover:border-neon-pink/50" 
-                  : "bg-gradient-to-br from-white/95 to-pink-50/90 border border-pink-200/60 hover:border-pink-400/70 shadow-xl shadow-pink-500/15 hover:shadow-pink-500/25 backdrop-blur-lg"
-              } transition-all duration-150 p-6 group hover:scale-105 hover:-translate-y-2 relative overflow-hidden`}
-              style={theme === "light" ? {
-                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
-                backdropFilter: "blur(15px)"
-              } : {}}
-            >
-              <div className="space-y-4">
-                <h3 className={`text-xl font-semibold ${
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Project 1 - CivicCircle */}
+          <Card
+            className={`${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-cyan/30 hover:border-neon-pink/50 shadow-2xl shadow-neon-cyan/20 hover:shadow-neon-pink/30" 
+                : "bg-gradient-to-br from-white/95 to-pink-50/90 border border-pink-200/60 hover:border-pink-400/70 shadow-xl shadow-pink-500/15 hover:shadow-pink-500/30 backdrop-blur-lg"
+            } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
+            style={theme === "light" ? {
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
+              backdropFilter: "blur(15px)"
+            } : {}}
+          >
+            {/* Animated Background Elements */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-neon-cyan/5 via-transparent to-neon-pink/5"
+                : "bg-gradient-to-br from-pink-500/3 via-transparent to-rose-500/3"
+            }`}></div>
+            
+            {/* Top gradient bar */}
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              theme === "dark" 
+                ? "bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-purple" 
+                : "bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600"
+            }`}></div>
+            
+            {/* Floating decorative elements */}
+            {theme === "dark" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-neon-cyan/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-neon-pink/60 rounded-full animate-ping"></div>
+              </>
+            )}
+            
+            {theme === "light" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-pink-500/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-rose-500/60 rounded-full animate-ping"></div>
+                <div className="absolute top-1/2 right-4 w-1 h-8 bg-gradient-to-t from-pink-400/20 to-transparent"></div>
+              </>
+            )}
+
+            <div className="relative z-10 space-y-6">
+              {/* Project Header */}
+              <div className="flex items-center space-x-4">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
                   theme === "dark" 
-                    ? "text-white group-hover:text-neon-pink" 
-                    : "text-gray-800 group-hover:text-pink-600"
-                } transition-colors`}>
-                  {project.title}
-                </h3>
-                <p className={theme === "dark" ? "text-gray-400 text-sm" : "text-gray-600 text-sm"}>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-                  do eiusmod tempor incididunt.
-                </p>
+                    ? "bg-neon-cyan/20 border-2 border-neon-cyan/40 group-hover:bg-neon-cyan/30" 
+                    : "bg-pink-500/20 border-2 border-pink-500/40 group-hover:bg-pink-500/30"
+                } transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  🫱‍🫲
+                </div>
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    theme === "dark" 
+                      ? "text-white group-hover:text-neon-cyan" 
+                      : "text-gray-800 group-hover:text-pink-600"
+                  } transition-colors duration-300`}>
+                    CivicCircle
+                  </h3>
+                  <p className={`text-sm font-medium ${
+                    theme === "dark" ? "text-neon-cyan/80" : "text-pink-600/80"
+                  }`}>
+                    Community Platform
+                  </p>
+                </div>
+              </div>
+
+              {/* Project Description */}
+              <p className={`${
+                theme === "dark" ? "text-gray-300" : "text-gray-700"
+              } text-sm leading-relaxed group-hover:text-opacity-90 transition-all duration-300`}>
+                A community-driven platform that brings people together to discuss and solve local civic issues. 
+                Features real-time discussions, polls, and organizing tools for local initiatives with a focus on 
+                unity and collective social action.
+              </p>
+
+              {/* Tech Stack */}
+              <div className="space-y-3">
+                <h4 className={`text-sm font-semibold ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}>
+                  Tech Stack:
+                </h4>
                 <div className="flex flex-wrap gap-2">
-                  {project.tech.map((tech, techIndex) => (
+                  {['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Socket.io'].map((tech, techIndex) => (
                     <Badge
                       key={techIndex}
-                      variant="secondary"
                       className={`${
                         theme === "dark" 
-                          ? "bg-neon-blue/20 text-neon-blue border border-neon-blue/30 hover:bg-neon-blue/30" 
-                          : "bg-pink-500/10 text-pink-600 border border-pink-500/30 hover:bg-pink-500/20"
-                      } transition-colors`}
+                          ? "bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan/20 hover:scale-105" 
+                          : "bg-pink-500/10 text-pink-600 border border-pink-500/30 hover:bg-pink-500/20 hover:scale-105"
+                      } transition-all duration-200 cursor-default`}
                     >
                       {tech}
                     </Badge>
                   ))}
                 </div>
               </div>
-            </Card>
-          ))}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan hover:text-black" 
+                      : "bg-pink-500/20 text-pink-600 border border-pink-500/30 hover:bg-pink-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  View Demo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "border-neon-pink/30 text-neon-pink hover:bg-neon-pink hover:text-black" 
+                      : "border-rose-500/30 text-rose-600 hover:bg-rose-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  GitHub
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Project 2 - SumoArts */}
+          <Card
+            className={`${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-purple/30 hover:border-neon-cyan/50 shadow-2xl shadow-neon-purple/20 hover:shadow-neon-cyan/30" 
+                : "bg-gradient-to-br from-white/95 to-rose-50/90 border border-rose-200/60 hover:border-rose-400/70 shadow-xl shadow-rose-500/15 hover:shadow-rose-500/30 backdrop-blur-lg"
+            } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
+            style={theme === "light" ? {
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 241, 242, 0.8) 50%, rgba(254, 226, 226, 0.6) 100%)",
+              backdropFilter: "blur(15px)"
+            } : {}}
+          >
+            {/* Animated Background Elements */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-neon-purple/5 via-transparent to-neon-cyan/5"
+                : "bg-gradient-to-br from-rose-500/3 via-transparent to-pink-500/3"
+            }`}></div>
+            
+            {/* Top gradient bar */}
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              theme === "dark" 
+                ? "bg-gradient-to-r from-neon-purple via-neon-pink to-neon-cyan" 
+                : "bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600"
+            }`}></div>
+            
+            {/* Floating decorative elements */}
+            {theme === "dark" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-neon-purple/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-neon-cyan/60 rounded-full animate-ping"></div>
+              </>
+            )}
+            
+            {theme === "light" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-rose-500/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-pink-500/60 rounded-full animate-ping"></div>
+                <div className="absolute top-1/2 right-4 w-1 h-8 bg-gradient-to-t from-rose-400/20 to-transparent"></div>
+              </>
+            )}
+
+            <div className="relative z-10 space-y-6">
+              {/* Project Header */}
+              <div className="flex items-center space-x-4">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
+                  theme === "dark" 
+                    ? "bg-neon-purple/20 border-2 border-neon-purple/40 group-hover:bg-neon-purple/30" 
+                    : "bg-rose-500/20 border-2 border-rose-500/40 group-hover:bg-rose-500/30"
+                } transition-all duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}>
+                  🎨
+                </div>
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    theme === "dark" 
+                      ? "text-white group-hover:text-neon-purple" 
+                      : "text-gray-800 group-hover:text-rose-600"
+                  } transition-colors duration-300`}>
+                    SumoArts
+                  </h3>
+                  <p className={`text-sm font-medium ${
+                    theme === "dark" ? "text-neon-purple/80" : "text-rose-600/80"
+                  }`}>
+                    Digital Art Gallery
+                  </p>
+                </div>
+              </div>
+
+              {/* Project Description */}
+              <p className={`${
+                theme === "dark" ? "text-gray-300" : "text-gray-700"
+              } text-sm leading-relaxed group-hover:text-opacity-90 transition-all duration-300`}>
+                An elegant online art gallery platform for digital artwork showcase with AI-powered image enhancement. 
+                Features artwork uploads, search functionality, view tracking, and Unsplash integration for high-quality 
+                visual experiences.
+              </p>
+
+              {/* Tech Stack */}
+              <div className="space-y-3">
+                <h4 className={`text-sm font-semibold ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}>
+                  Tech Stack:
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {['React.js', 'Node.js', 'Unsplash API', 'Firebase', 'Tailwind CSS'].map((tech, techIndex) => (
+                    <Badge
+                      key={techIndex}
+                      className={`${
+                        theme === "dark" 
+                          ? "bg-neon-purple/10 text-neon-purple border border-neon-purple/30 hover:bg-neon-purple/20 hover:scale-105" 
+                          : "bg-rose-500/10 text-rose-600 border border-rose-500/30 hover:bg-rose-500/20 hover:scale-105"
+                      } transition-all duration-200 cursor-default`}
+                    >
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "bg-neon-purple/20 text-neon-purple border border-neon-purple/30 hover:bg-neon-purple hover:text-black" 
+                      : "bg-rose-500/20 text-rose-600 border border-rose-500/30 hover:bg-rose-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  View Demo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan hover:text-black" 
+                      : "border-pink-500/30 text-pink-600 hover:bg-pink-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  GitHub
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Project 3 - RentCircle */}
+          <Card
+            className={`${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-blue/30 hover:border-neon-purple/50 shadow-2xl shadow-neon-blue/20 hover:shadow-neon-purple/30" 
+                : "bg-gradient-to-br from-white/95 to-blue-50/90 border border-blue-200/60 hover:border-blue-400/70 shadow-xl shadow-blue-500/15 hover:shadow-blue-500/30 backdrop-blur-lg"
+            } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
+            style={theme === "light" ? {
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(239, 246, 255, 0.8) 50%, rgba(219, 234, 254, 0.6) 100%)",
+              backdropFilter: "blur(15px)"
+            } : {}}
+          >
+            {/* Animated Background Elements */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-neon-blue/5 via-transparent to-neon-purple/5"
+                : "bg-gradient-to-br from-blue-500/3 via-transparent to-purple-500/3"
+            }`}></div>
+            
+            {/* Top gradient bar */}
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              theme === "dark" 
+                ? "bg-gradient-to-r from-neon-blue via-neon-cyan to-neon-purple" 
+                : "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"
+            }`}></div>
+            
+            {/* Floating decorative elements */}
+            {theme === "dark" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-neon-blue/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-neon-purple/60 rounded-full animate-ping"></div>
+              </>
+            )}
+            
+            {theme === "light" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-blue-500/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-purple-500/60 rounded-full animate-ping"></div>
+                <div className="absolute top-1/2 right-4 w-1 h-8 bg-gradient-to-t from-blue-400/20 to-transparent"></div>
+              </>
+            )}
+
+            <div className="relative z-10 space-y-6">
+              {/* Project Header */}
+              <div className="flex items-center space-x-4">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
+                  theme === "dark" 
+                    ? "bg-neon-blue/20 border-2 border-neon-blue/40 group-hover:bg-neon-blue/30" 
+                    : "bg-blue-500/20 border-2 border-blue-500/40 group-hover:bg-blue-500/30"
+                } transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  🔄
+                </div>
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    theme === "dark" 
+                      ? "text-white group-hover:text-neon-blue" 
+                      : "text-gray-800 group-hover:text-blue-600"
+                  } transition-colors duration-300`}>
+                    RentCircle
+                  </h3>
+                  <p className={`text-sm font-medium ${
+                    theme === "dark" ? "text-neon-blue/80" : "text-blue-600/80"
+                  }`}>
+                    P2P Rental Platform
+                  </p>
+                </div>
+              </div>
+
+              {/* Project Description */}
+              <p className={`${
+                theme === "dark" ? "text-gray-300" : "text-gray-700"
+              } text-sm leading-relaxed group-hover:text-opacity-90 transition-all duration-300`}>
+                A comprehensive peer-to-peer rental platform enabling users to rent and lend items within their community. 
+                Features real-time chat, rental agreements, admin dashboard, and payment integration for a sustainable 
+                sharing economy.
+              </p>
+
+              {/* Tech Stack */}
+              <div className="space-y-3">
+                <h4 className={`text-sm font-semibold ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}>
+                  Tech Stack:
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Next.js', 'TypeScript', 'Prisma ORM', 'PostgreSQL', 'Tailwind CSS', 'Socket.io'].map((tech, techIndex) => (
+                    <Badge
+                      key={techIndex}
+                      className={`${
+                        theme === "dark" 
+                          ? "bg-neon-blue/10 text-neon-blue border border-neon-blue/30 hover:bg-neon-blue/20 hover:scale-105" 
+                          : "bg-blue-500/10 text-blue-600 border border-blue-500/30 hover:bg-blue-500/20 hover:scale-105"
+                      } transition-all duration-200 cursor-default`}
+                    >
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "bg-neon-blue/20 text-neon-blue border border-neon-blue/30 hover:bg-neon-blue hover:text-black" 
+                      : "bg-blue-500/20 text-blue-600 border border-blue-500/30 hover:bg-blue-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  View Demo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "border-neon-purple/30 text-neon-purple hover:bg-neon-purple hover:text-black" 
+                      : "border-purple-500/30 text-purple-600 hover:bg-purple-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  GitHub
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Project 4 - TalkTactics */}
+          <Card
+            className={`${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-pink/30 hover:border-neon-blue/50 shadow-2xl shadow-neon-pink/20 hover:shadow-neon-blue/30" 
+                : "bg-gradient-to-br from-white/95 to-green-50/90 border border-green-200/60 hover:border-green-400/70 shadow-xl shadow-green-500/15 hover:shadow-green-500/30 backdrop-blur-lg"
+            } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
+            style={theme === "light" ? {
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 244, 0.8) 50%, rgba(220, 252, 231, 0.6) 100%)",
+              backdropFilter: "blur(15px)"
+            } : {}}
+          >
+            {/* Animated Background Elements */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+              theme === "dark" 
+                ? "bg-gradient-to-br from-neon-pink/5 via-transparent to-neon-blue/5"
+                : "bg-gradient-to-br from-green-500/3 via-transparent to-emerald-500/3"
+            }`}></div>
+            
+            {/* Top gradient bar */}
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              theme === "dark" 
+                ? "bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue" 
+                : "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600"
+            }`}></div>
+            
+            {/* Floating decorative elements */}
+            {theme === "dark" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-neon-pink/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-neon-blue/60 rounded-full animate-ping"></div>
+              </>
+            )}
+            
+            {theme === "light" && (
+              <>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-green-500/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-emerald-500/60 rounded-full animate-ping"></div>
+                <div className="absolute top-1/2 right-4 w-1 h-8 bg-gradient-to-t from-green-400/20 to-transparent"></div>
+              </>
+            )}
+
+            <div className="relative z-10 space-y-6">
+              {/* Project Header */}
+              <div className="flex items-center space-x-4">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
+                  theme === "dark" 
+                    ? "bg-neon-pink/20 border-2 border-neon-pink/40 group-hover:bg-neon-pink/30" 
+                    : "bg-green-500/20 border-2 border-green-500/40 group-hover:bg-green-500/30"
+                } transition-all duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}>
+                  🗣️
+                </div>
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    theme === "dark" 
+                      ? "text-white group-hover:text-neon-pink" 
+                      : "text-gray-800 group-hover:text-green-600"
+                  } transition-colors duration-300`}>
+                    TalkTactics
+                  </h3>
+                  <p className={`text-sm font-medium ${
+                    theme === "dark" ? "text-neon-pink/80" : "text-green-600/80"
+                  }`}>
+                    Interactive Gaming Platform
+                  </p>
+                </div>
+              </div>
+
+              {/* Project Description */}
+              <p className={`${
+                theme === "dark" ? "text-gray-300" : "text-gray-700"
+              } text-sm leading-relaxed group-hover:text-opacity-90 transition-all duration-300`}>
+                A multiplayer platform featuring strategic communication games like Chain Story, Truth or Tactical Dare, 
+                and Online Debates. Includes player profiles, real-time interactions, and a collaborative doubt-solving arena 
+                for enhanced learning.
+              </p>
+
+              {/* Tech Stack */}
+              <div className="space-y-3">
+                <h4 className={`text-sm font-semibold ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}>
+                  Tech Stack:
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                                   {['React.js', 'Node.js', 'Express', 'MongoDB', 'WebSockets', 'Firebase Auth'].map((tech, techIndex) => (
+                    <Badge
+                      key={techIndex}
+                      className={`${
+                        theme === "dark" 
+                          ? "bg-neon-pink/10 text-neon-pink border border-neon-pink/30 hover:bg-neon-pink/20 hover:scale-105" 
+                          : "bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20 hover:scale-105"
+                      } transition-all duration-200 cursor-default`}
+                    >
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "bg-neon-pink/20 text-neon-pink border border-neon-pink/30 hover:bg-neon-pink hover:text-black" 
+                      : "bg-green-500/20 text-green-600 border border-green-500/30 hover:bg-green-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  View Demo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`${
+                    theme === "dark" 
+                      ? "border-neon-blue/30 text-neon-blue hover:bg-neon-blue hover:text-black" 
+                      : "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
+                  } transition-all duration-200 hover:scale-105`}
+                >
+                  GitHub
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* View All Projects Button */}
+        <div className="text-center mt-16">
+          <Button
+            size="lg"
+            className={`${
+              theme === "dark" 
+                ? "bg-gradient-to-r from-neon-cyan to-neon-purple hover:from-neon-purple hover:to-neon-cyan text-white" 
+                : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg shadow-pink-500/30"
+            } font-semibold px-8 py-3 transition-all duration-300 hover:scale-105 hover:-translate-y-1`}
+          >
+            View All Projects →
+          </Button>
         </div>
       </section>
 
