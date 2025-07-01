@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Send, CheckCircle } from "lucide-react";
+import emailjs from '@emailjs/browser';
 
 const Index = () => {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -13,6 +14,105 @@ const Index = () => {
   const [showExperience, setShowExperience] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Contact form states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // EmailJS configuration - Secured with environment variables
+  const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+  const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+  const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+  useEffect(() => {
+    // Initialize EmailJS with environment variable
+    if (EMAILJS_PUBLIC_KEY) {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+      console.log('EmailJS initialized successfully');
+    } else {
+      console.error('EmailJS public key not found in environment variables');
+    }
+  }, [EMAILJS_PUBLIC_KEY]);
+
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle form submission with environment variable validation
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    // Check if environment variables are loaded
+    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+      alert('Email service is not properly configured. Please contact the administrator.');
+      console.error('Missing EmailJS environment variables:', {
+        SERVICE_ID: !!EMAILJS_SERVICE_ID,
+        TEMPLATE_ID: !!EMAILJS_TEMPLATE_ID,
+        PUBLIC_KEY: !!EMAILJS_PUBLIC_KEY
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Send email using EmailJS with environment variables
+      const result = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+          to_name: 'Sumit Kumar',
+          to_email: 'sksumitboss123@gmail.com',
+          reply_to: formData.email,
+          timestamp: new Date().toLocaleString(),
+        },
+        EMAILJS_PUBLIC_KEY
+      );
+
+      console.log('EmailJS Success:', result);
+      
+      if (result.status === 200) {
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', message: '' });
+        
+        // Reset success message after 5 seconds
+        setTimeout(() => {
+          setIsSubmitted(false);
+        }, 5000);
+      }
+    } catch (error) {
+      console.error('EmailJS Error:', error);
+      alert('Failed to send message. Please try again or contact me directly at sksumitboss123@gmail.com');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     // Apply theme class to document with smooth transition
@@ -1340,7 +1440,7 @@ const Index = () => {
             }`}></div>
             
             {/* Top gradient bar */}
-            <div className={`absolute top-0 left-0 w-full h-1 ${
+                       <div className={`absolute top-0 left-0 w-full h-1 ${
               theme === "dark" 
                 ? "bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue" 
                 : "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600"
@@ -1405,7 +1505,7 @@ const Index = () => {
                   Tech Stack:
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                                   {['React.js', 'Node.js', 'Express', 'MongoDB', 'WebSockets', 'Firebase Auth'].map((tech, techIndex) => (
+                  {['React.js', 'Node.js', 'Express', 'MongoDB', 'WebSockets', 'Firebase Auth'].map((tech, techIndex) => (
                     <Badge
                       key={techIndex}
                       className={`${
@@ -1557,7 +1657,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Send Message Section */}
+      {/* Send Message Section - Updated with Working EmailJS */}
       <section id="contact" className="container mx-auto px-4 py-32 relative">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
@@ -1577,55 +1677,127 @@ const Index = () => {
             background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
             backdropFilter: "blur(25px)"
           } : {}}>
-            <form className="space-y-6">
+            
+            {/* Decorative elements */}
+            {theme === "light" && (
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500/60 to-rose-500/60"></div>
+            )}
+            
+            {/* Success Message */}
+            {isSubmitted && (
+              <div className={`mb-6 p-4 rounded-lg border ${
+                theme === "dark" 
+                  ? "bg-green-900/20 border-green-500/50 text-green-400"
+                  : "bg-green-50 border-green-300 text-green-700"
+              } flex items-center space-x-3 animate-in slide-in-from-top-4 duration-300`}>
+                <CheckCircle className="w-5 h-5" />
+                <p className="font-medium">
+                  🎉 Message sent successfully! I'll get back to you soon.
+                </p>
+              </div>
+            )}
+
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Input
-                    placeholder="Name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your Name *"
+                    required
+                    disabled={isSubmitting}
                     className={`${
                       theme === "dark" 
                         ? "bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-neon-blue focus:ring-neon-blue/20" 
                         : "bg-pink-50/50 border-pink-300 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500/20"
-                    }`}
+                    } disabled:opacity-50 transition-all duration-200`}
                   />
                 </div>
                 <div>
                   <Input
                     type="email"
-                    placeholder="Email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Your Email *"
+                    required
+                    disabled={isSubmitting}
                     className={`${
                       theme === "dark" 
                         ? "bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-neon-blue focus:ring-neon-blue/20" 
                         : "bg-pink-50/50 border-pink-300 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500/20"
-                    }`}
+                    } disabled:opacity-50 transition-all duration-200`}
                   />
                 </div>
               </div>
 
               <div>
                 <Textarea
-                  placeholder="Message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Your Message *"
                   rows={6}
+                  required
+                  disabled={isSubmitting}
                   className={`${
                     theme === "dark" 
                       ? "bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-neon-blue focus:ring-neon-blue/20" 
                       : "bg-pink-50/50 border-pink-300 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500/20"
-                  } resize-none`}
+                  } resize-none disabled:opacity-50 transition-all duration-200`}
                 />
               </div>
 
               <Button
                 type="submit"
                 size="lg"
+                disabled={isSubmitting || isSubmitted}
                 className={`w-full ${
                   theme === "dark" 
                     ? "bg-gradient-to-r from-neon-pink to-neon-purple hover:from-neon-purple hover:to-neon-pink" 
                     : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-rose-500 hover:to-pink-500 shadow-lg shadow-pink-500/30"
-                } text-white font-semibold transition-all duration-150 transform hover:scale-105`}
+                } text-white font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
               >
-                Send
+                <div className="flex items-center justify-center space-x-2">
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      <span>Sending Message...</span>
+                    </>
+                  ) : isSubmitted ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Message Sent! ✨</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Send Message</span>
+                    </>
+                  )}
+                </div>
               </Button>
             </form>
+
+            {/* Contact info footer */}
+            <div className={`mt-6 pt-6 border-t ${
+              theme === "dark" ? "border-gray-700" : "border-pink-200"
+            } text-center`}>
+              <p className={`text-sm ${
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
+              }`}>
+                Or reach me directly at{" "}
+                <a 
+                  href="mailto:sksumitboss123@gmail.com" 
+                  className={`font-medium ${
+                    theme === "dark" ? "text-neon-cyan hover:text-neon-blue" : "text-pink-600 hover:text-rose-600"
+                  } transition-colors duration-200`}
+                >
+                  sksumitboss123@gmail.com
+                </a>
+              </p>
+            </div>
           </Card>
         </div>
       </section>
