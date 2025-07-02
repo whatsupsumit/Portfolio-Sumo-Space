@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sun, Moon, Send, CheckCircle } from "lucide-react";
 import emailjs from '@emailjs/browser';
+import Lenis from 'lenis';
 
 const Index = () => {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -14,6 +15,7 @@ const Index = () => {
   const [showExperience, setShowExperience] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   
   // Contact form states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +26,7 @@ const Index = () => {
     message: ''
   });
   const formRef = useRef<HTMLFormElement>(null);
+  const lenisRef = useRef<Lenis | null>(null);
 
   // EmailJS configuration - Secured with environment variables
   const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
@@ -39,6 +42,113 @@ const Index = () => {
       console.error('EmailJS public key not found in environment variables');
     }
   }, [EMAILJS_PUBLIC_KEY]);
+
+  // Initialize Lenis Smooth Scroll with optimized performance settings
+  useEffect(() => {
+    // Create Lenis instance with optimized settings
+    const lenis = new Lenis({
+      duration: 1.2, // Fixed duration for consistent performance
+      easing: (t: number) => 1 - Math.pow(1 - t, 3), // Optimized easing function
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      mouseMultiplier: 1.0, // Consistent multiplier
+      smoothTouch: false,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    lenisRef.current = lenis;
+
+    // Optimized scroll progress tracking with throttling
+    let ticking = false;
+    lenis.on('scroll', ({ scroll, limit }: { scroll: number, limit: number }) => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const progress = Math.max(0, Math.min(1, scroll / limit));
+          setScrollProgress(progress);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    // Animate Lenis on every frame
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    // Add html class for Lenis styling
+    document.documentElement.classList.add('lenis');
+
+    // Enhance scroll behavior during theme transitions
+    if (isTransitioning) {
+      lenis.stop();
+      setTimeout(() => {
+        lenis.start();
+      }, 600); // Resume after theme transition
+    }
+
+    return () => {
+      lenis.destroy();
+      document.documentElement.classList.remove('lenis');
+    };
+  }, [theme, isTransitioning]);
+
+  // Intersection Observer for scroll-triggered animations
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -10% 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const element = entry.target as HTMLElement;
+          const animationType = element.dataset.reveal;
+          
+          switch (animationType) {
+            case 'up':
+              element.classList.add('scroll-reveal');
+              break;
+            case 'left':
+              element.classList.add('scroll-reveal-left');
+              break;
+            case 'right':
+              element.classList.add('scroll-reveal-right');
+              break;
+            default:
+              element.classList.add('scroll-reveal');
+          }
+          
+          observer.unobserve(element);
+        }
+      });
+    }, observerOptions);
+
+    // Observe all elements with data-reveal attribute
+    const revealElements = document.querySelectorAll('[data-reveal]');
+    revealElements.forEach(el => observer.observe(el));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Optimized scroll-to-section function with Lenis
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element && lenisRef.current) {
+      lenisRef.current.scrollTo(element, {
+        duration: 1.5, // Fixed duration for consistent performance
+        easing: (t: number) => Math.sin((t * Math.PI) / 2), // Optimized easing
+        offset: -80, // Account for fixed header if any
+      });
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -124,6 +234,11 @@ const Index = () => {
   const toggleTheme = () => {
     setIsTransitioning(true);
     
+    // Temporarily pause Lenis during theme transition
+    if (lenisRef.current) {
+      lenisRef.current.stop();
+    }
+    
     // Create a smooth fade transition effect
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -158,6 +273,10 @@ const Index = () => {
       setTimeout(() => {
         document.body.removeChild(overlay);
         setIsTransitioning(false);
+        // Resume Lenis with new theme settings
+        if (lenisRef.current) {
+          lenisRef.current.start();
+        }
       }, 400);
     }, 400);
   };
@@ -174,7 +293,21 @@ const Index = () => {
       }}
     >
       
-      {/* Animated Background Elements */}
+      {/* Scroll Progress Indicator */}
+      <div 
+        className={`scroll-progress fixed top-0 left-0 h-1 z-50 transition-opacity duration-300 ${
+          scrollProgress > 0.01 ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: theme === "dark" 
+            ? "linear-gradient(to right, #ff00ff, #9f00ff, #00ffff)" 
+            : "linear-gradient(to right, #ec4899, #db2777, #be185d)",
+          transform: `scaleX(${scrollProgress})`,
+          transformOrigin: 'left'
+        }}
+      />
+      
+      {/* Animated Background Elements (optimized) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Light mode floating elements */}
         {theme === "light" && (
@@ -188,11 +321,11 @@ const Index = () => {
               }}
             ></div>
             <div 
-              className="absolute top-3/4 right-1/4 w-24 h-24 rounded-full opacity-15 animate-float"
+              className="absolute top-3/4 right-1/4 w-24 h-24 rounded-full opacity-15 animate-float-reverse"
               style={{
                 background: "radial-gradient(circle, rgba(219, 39, 119, 0.4) 0%, transparent 70%)",
                 filter: "blur(15px)",
-                animation: "float 6s ease-in-out infinite reverse"
+                animation: "float-reverse 6s ease-in-out infinite"
               }}
             ></div>
           </>
@@ -210,11 +343,11 @@ const Index = () => {
               }}
             ></div>
             <div 
-              className="absolute bottom-1/4 left-1/3 w-28 h-28 rounded-full opacity-15 animate-float"
+              className="absolute bottom-1/4 left-1/3 w-28 h-28 rounded-full opacity-15 animate-float-reverse"
               style={{
                 background: "radial-gradient(circle, #00ffff 0%, transparent 70%)",
                 filter: "blur(25px)",
-                animation: "float 7s ease-in-out infinite reverse"
+                animation: "float-reverse 7s ease-in-out infinite"
               }}
             ></div>
           </>
@@ -373,13 +506,11 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                className={`border-2 transition-all duration-500 magnetic ${theme === "dark" 
                   ? "border-neon-pink bg-transparent text-neon-pink hover:bg-neon-pink hover:text-black" 
                   : "border-pink-500 bg-transparent text-pink-600 hover:bg-pink-500 hover:text-white shadow-lg shadow-pink-500/20"} 
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
-                onClick={() => {
-                  document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => scrollToSection('projects')}
               >
                 <span className="relative z-10">View Projects</span>
                 <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
@@ -391,7 +522,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                className={`border-2 transition-all duration-500 magnetic ${theme === "dark" 
                   ? "border-neon-blue bg-transparent text-neon-blue hover:bg-neon-blue hover:text-black" 
                   : "border-rose-500 bg-transparent text-rose-600 hover:bg-rose-500 hover:text-white shadow-lg shadow-rose-500/20"} 
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
@@ -409,13 +540,11 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                className={`border-2 transition-all duration-500 magnetic ${theme === "dark" 
                   ? "border-neon-purple bg-transparent text-neon-purple hover:bg-neon-purple hover:text-black" 
                   : "border-pink-600 bg-transparent text-pink-700 hover:bg-pink-600 hover:text-white shadow-lg shadow-pink-600/20"} 
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
-                onClick={() => {
-                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => scrollToSection('contact')}
               >
                 <span className="relative z-10">Hire Me</span>
                 <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
@@ -431,11 +560,11 @@ const Index = () => {
       {/* About Me & Tech Stack Section - MOVED DOWN */}
       <section id="about" className={`container mx-auto px-4 py-32 mt-20 relative ${
         theme === "light" ? "text-gray-800" : ""
-      }`}>
+      }`} data-reveal="up">
         
         <div className="grid lg:grid-cols-2 gap-16 relative z-10">
           {/* About Me */}
-          <div>
+          <div data-reveal="left">
             <h2 className="text-3xl md:text-4xl font-michroma font-bold mb-8">
               <span className={`${theme === "dark" 
                 ? "bg-gradient-to-r from-neon-purple to-neon-pink" 
@@ -979,7 +1108,7 @@ const Index = () => {
           </div>
 
           {/* Tech Stack */}
-          <div>
+          <div data-reveal="right">
             <h2 className="text-3xl md:text-4xl font-michroma font-bold mb-8">
               <span className={`${theme === "dark" 
                 ? "bg-gradient-to-r from-neon-blue to-neon-cyan" 
@@ -1001,17 +1130,21 @@ const Index = () => {
               ].map((tech, index) => (
                 <div
                   key={index}
-                  className={`flex flex-col items-center space-y-2 p-4 rounded-lg ${
+                  data-reveal="up"
+                  className={`flex flex-col items-center space-y-2 p-4 rounded-lg magnetic ${
                     theme === "dark" 
                       ? "bg-gray-800/30 border border-gray-700 hover:border-neon-blue/50" 
                       : "bg-gradient-to-br from-white/90 to-pink-50/80 border border-pink-200/60 hover:border-pink-400/60 shadow-lg shadow-pink-500/10 hover:shadow-pink-500/20 backdrop-blur-sm"
-                  } transition-all duration-150 group hover:scale-105 hover:-translate-y-1`}
-                  style={theme === "light" ? {
-                    backdropFilter: "blur(10px)",
-                    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(252, 231, 243, 0.6) 100%)"
-                  } : {}}
+                  } transition-all duration-300 group hover:scale-105 hover:-translate-y-1`}
+                  style={{
+                    ...(theme === "light" ? {
+                      backdropFilter: "blur(10px)",
+                      background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(252, 231, 243, 0.6) 100%)"
+                    } : {}),
+                    animationDelay: `${index * 0.1}s`
+                  }}
                 >
-                  <div className="text-3xl group-hover:scale-110 transition-transform duration-150">
+                  <div className="text-3xl group-hover:scale-110 transition-transform duration-150 group-hover:rotate-12">
                     {tech.icon}
                   </div>
                   <span className={`text-sm ${
@@ -1029,8 +1162,8 @@ const Index = () => {
       </section>
 
       {/* Projects Section */}
-      <section id="projects" className="container mx-auto px-4 py-32 relative">
-        <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
+      <section id="projects" className="container mx-auto px-4 py-32 relative" data-reveal="up">
+        <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16" data-reveal="up">
           <span className={`${theme === "dark" 
             ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
             : "bg-gradient-to-r from-pink-600 to-rose-600"} bg-clip-text text-transparent`}>
@@ -1041,7 +1174,8 @@ const Index = () => {
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {/* Project 1 - CivicCircle */}
           <Card
-            className={`${
+            data-reveal="left"
+            className={`project-card ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-cyan/30 hover:border-neon-pink/50 shadow-2xl shadow-neon-cyan/20 hover:shadow-neon-pink/30" 
                 : "bg-gradient-to-br from-white/95 to-pink-50/90 border border-pink-200/60 hover:border-pink-400/70 shadow-xl shadow-pink-500/15 hover:shadow-pink-500/30 backdrop-blur-lg"
@@ -1168,7 +1302,8 @@ const Index = () => {
 
           {/* Project 2 - SumoArts */}
           <Card
-            className={`${
+            data-reveal="right"
+            className={`project-card ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-purple/30 hover:border-neon-cyan/50 shadow-2xl shadow-neon-purple/20 hover:shadow-neon-cyan/30" 
                 : "bg-gradient-to-br from-white/95 to-rose-50/90 border border-rose-200/60 hover:border-rose-400/70 shadow-xl shadow-rose-500/15 hover:shadow-rose-500/30 backdrop-blur-lg"
@@ -1295,7 +1430,8 @@ const Index = () => {
 
           {/* Project 3 - RentCircle */}
           <Card
-            className={`${
+            data-reveal="left"
+            className={`project-card ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-blue/30 hover:border-neon-purple/50 shadow-2xl shadow-neon-blue/20 hover:shadow-neon-purple/30" 
                 : "bg-gradient-to-br from-white/95 to-blue-50/90 border border-blue-200/60 hover:border-blue-400/70 shadow-xl shadow-blue-500/15 hover:shadow-blue-500/30 backdrop-blur-lg"
@@ -1658,9 +1794,9 @@ const Index = () => {
       </section>
 
       {/* Send Message Section - Updated with Working EmailJS */}
-      <section id="contact" className="container mx-auto px-4 py-32 relative">
+      <section id="contact" className="container mx-auto px-4 py-32 relative" data-reveal="up">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16" data-reveal="up">
             <span className={`${theme === "dark" 
               ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
               : "bg-gradient-to-r from-rose-600 to-pink-600"} bg-clip-text text-transparent`}>
@@ -1673,6 +1809,7 @@ const Index = () => {
               ? "bg-gray-800/50 border-gray-700" 
               : "bg-gradient-to-br from-white/95 to-pink-50/80 border border-pink-200/70 shadow-2xl shadow-pink-500/20 backdrop-blur-xl"
           } p-8 relative overflow-hidden`}
+          data-reveal="up"
           style={theme === "light" ? {
             background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
             backdropFilter: "blur(25px)"
