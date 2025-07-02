@@ -34,121 +34,79 @@ const Index = () => {
   const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
   useEffect(() => {
-    // Initialize EmailJS with environment variable
-    if (EMAILJS_PUBLIC_KEY) {
-      emailjs.init(EMAILJS_PUBLIC_KEY);
-      console.log('EmailJS initialized successfully');
-    } else {
-      console.error('EmailJS public key not found in environment variables');
-    }
-  }, [EMAILJS_PUBLIC_KEY]);
+    // Initialize EmailJS
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }, []);
 
-  // Initialize Lenis Smooth Scroll with optimized performance settings
+  // Initialize Lenis for smooth scrolling
   useEffect(() => {
-    // Create Lenis instance with optimized settings
     const lenis = new Lenis({
-      duration: 1.2, // Fixed duration for consistent performance
-      easing: (t: number) => 1 - Math.pow(1 - t, 3), // Optimized easing function
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smooth: true,
-      mouseMultiplier: 1.0, // Consistent multiplier
-      smoothTouch: false,
+      duration: theme === "dark" ? 1.8 : 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: theme === "dark" ? 0.8 : 1.0,
       touchMultiplier: 2,
       infinite: false,
     });
 
     lenisRef.current = lenis;
 
-    // Optimized scroll progress tracking with throttling
-    let ticking = false;
-    lenis.on('scroll', ({ scroll, limit }: { scroll: number, limit: number }) => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const progress = Math.max(0, Math.min(1, scroll / limit));
-          setScrollProgress(progress);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
-
-    // Animate Lenis on every frame
     function raf(time: number) {
       lenis.raf(time);
       requestAnimationFrame(raf);
     }
+
     requestAnimationFrame(raf);
 
-    // Add html class for Lenis styling
-    document.documentElement.classList.add('lenis');
-
-    // Enhance scroll behavior during theme transitions
-    if (isTransitioning) {
-      lenis.stop();
-      setTimeout(() => {
-        lenis.start();
-      }, 600); // Resume after theme transition
-    }
+    // Update scroll progress
+    lenis.on('scroll', ({ scroll, limit }: { scroll: number; limit: number }) => {
+      const progress = Math.min(scroll / limit, 1);
+      setScrollProgress(progress);
+    });
 
     return () => {
       lenis.destroy();
-      document.documentElement.classList.remove('lenis');
+      lenisRef.current = null;
     };
-  }, [theme, isTransitioning]);
+  }, [theme]);
 
-  // Intersection Observer for scroll-triggered animations
+  // Enhanced scroll to section function
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element && lenisRef.current) {
+      lenisRef.current.scrollTo(element, {
+        offset: -80,
+        duration: theme === "dark" ? 1.6 : 1.2,
+        easing: (t) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+      });
+    }
+  };
+
+  // Scroll reveal animations
   useEffect(() => {
     const observerOptions = {
       threshold: 0.1,
-      rootMargin: '0px 0px -10% 0px'
+      rootMargin: '0px 0px -100px 0px'
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const element = entry.target as HTMLElement;
-          const animationType = element.dataset.reveal;
-          
-          switch (animationType) {
-            case 'up':
-              element.classList.add('scroll-reveal');
-              break;
-            case 'left':
-              element.classList.add('scroll-reveal-left');
-              break;
-            case 'right':
-              element.classList.add('scroll-reveal-right');
-              break;
-            default:
-              element.classList.add('scroll-reveal');
-          }
-          
-          observer.unobserve(element);
+          entry.target.classList.add('revealed');
         }
       });
     }, observerOptions);
 
-    // Observe all elements with data-reveal attribute
-    const revealElements = document.querySelectorAll('[data-reveal]');
-    revealElements.forEach(el => observer.observe(el));
+    // Observe all scroll-reveal elements
+    const revealElements = document.querySelectorAll('.scroll-reveal');
+    revealElements.forEach((el) => observer.observe(el));
 
     return () => {
-      observer.disconnect();
+      revealElements.forEach((el) => observer.unobserve(el));
     };
   }, []);
-
-  // Optimized scroll-to-section function with Lenis
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element && lenisRef.current) {
-      lenisRef.current.scrollTo(element, {
-        duration: 1.5, // Fixed duration for consistent performance
-        easing: (t: number) => Math.sin((t * Math.PI) / 2), // Optimized easing
-        offset: -80, // Account for fixed header if any
-      });
-    }
-  };
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -159,7 +117,7 @@ const Index = () => {
     }));
   };
 
-  // Handle form submission with environment variable validation
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -168,28 +126,10 @@ const Index = () => {
       return;
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      alert('Please enter a valid email address');
-      return;
-    }
-
-    // Check if environment variables are loaded
-    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
-      alert('Email service is not properly configured. Please contact the administrator.');
-      console.error('Missing EmailJS environment variables:', {
-        SERVICE_ID: !!EMAILJS_SERVICE_ID,
-        TEMPLATE_ID: !!EMAILJS_TEMPLATE_ID,
-        PUBLIC_KEY: !!EMAILJS_PUBLIC_KEY
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      // Send email using EmailJS with environment variables
+      // Send email using EmailJS
       const result = await emailjs.send(
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
@@ -197,16 +137,12 @@ const Index = () => {
           from_name: formData.name,
           from_email: formData.email,
           message: formData.message,
-          to_name: 'Sumit Kumar',
-          to_email: 'sksumitboss123@gmail.com',
+          to_email: 'sksumitboss123@gmail.com', // Your email (fixed the typo)
           reply_to: formData.email,
-          timestamp: new Date().toLocaleString(),
         },
         EMAILJS_PUBLIC_KEY
       );
 
-      console.log('EmailJS Success:', result);
-      
       if (result.status === 200) {
         setIsSubmitted(true);
         setFormData({ name: '', email: '', message: '' });
@@ -218,7 +154,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('EmailJS Error:', error);
-      alert('Failed to send message. Please try again or contact me directly at sksumitboss123@gmail.com');
+      alert('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -233,11 +169,6 @@ const Index = () => {
 
   const toggleTheme = () => {
     setIsTransitioning(true);
-    
-    // Temporarily pause Lenis during theme transition
-    if (lenisRef.current) {
-      lenisRef.current.stop();
-    }
     
     // Create a smooth fade transition effect
     const overlay = document.createElement('div');
@@ -273,10 +204,6 @@ const Index = () => {
       setTimeout(() => {
         document.body.removeChild(overlay);
         setIsTransitioning(false);
-        // Resume Lenis with new theme settings
-        if (lenisRef.current) {
-          lenisRef.current.start();
-        }
       }, 400);
     }, 400);
   };
@@ -295,19 +222,14 @@ const Index = () => {
       
       {/* Scroll Progress Indicator */}
       <div 
-        className={`scroll-progress fixed top-0 left-0 h-1 z-50 transition-opacity duration-300 ${
-          scrollProgress > 0.01 ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`scroll-progress ${theme === "light" ? "light-theme" : ""}`}
         style={{
-          background: theme === "dark" 
-            ? "linear-gradient(to right, #ff00ff, #9f00ff, #00ffff)" 
-            : "linear-gradient(to right, #ec4899, #db2777, #be185d)",
           transform: `scaleX(${scrollProgress})`,
-          transformOrigin: 'left'
+          opacity: scrollProgress > 0.01 ? 1 : 0
         }}
-      />
+      ></div>
       
-      {/* Animated Background Elements (optimized) */}
+      {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Light mode floating elements */}
         {theme === "light" && (
@@ -321,11 +243,11 @@ const Index = () => {
               }}
             ></div>
             <div 
-              className="absolute top-3/4 right-1/4 w-24 h-24 rounded-full opacity-15 animate-float-reverse"
+              className="absolute top-3/4 right-1/4 w-24 h-24 rounded-full opacity-15 animate-float"
               style={{
                 background: "radial-gradient(circle, rgba(219, 39, 119, 0.4) 0%, transparent 70%)",
                 filter: "blur(15px)",
-                animation: "float-reverse 6s ease-in-out infinite"
+                animation: "float 6s ease-in-out infinite reverse"
               }}
             ></div>
           </>
@@ -343,11 +265,11 @@ const Index = () => {
               }}
             ></div>
             <div 
-              className="absolute bottom-1/4 left-1/3 w-28 h-28 rounded-full opacity-15 animate-float-reverse"
+              className="absolute bottom-1/4 left-1/3 w-28 h-28 rounded-full opacity-15 animate-float"
               style={{
                 background: "radial-gradient(circle, #00ffff 0%, transparent 70%)",
                 filter: "blur(25px)",
-                animation: "float-reverse 7s ease-in-out infinite"
+                animation: "float 7s ease-in-out infinite reverse"
               }}
             ></div>
           </>
@@ -401,8 +323,46 @@ const Index = () => {
         </Button>
       </div>
 
+      {/* Floating Navigation Menu */}
+      <div className="fixed left-6 top-1/2 transform -translate-y-1/2 z-40 hidden lg:block">
+        <nav className={`flex flex-col space-y-3 p-3 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:scale-105 ${
+          theme === "dark" 
+            ? "bg-gray-800/70 border border-neon-pink/30 hover:border-neon-pink/50 hover:shadow-lg hover:shadow-neon-pink/20" 
+            : "bg-white/80 border border-pink-300/50 shadow-lg shadow-pink-500/10 hover:border-pink-400/70 hover:shadow-xl hover:shadow-pink-500/20"
+        }`}>
+          {[
+            { id: 'home', label: 'Home', icon: '🏠' },
+            { id: 'about', label: 'About', icon: '👨‍💻' },
+            { id: 'projects', label: 'Projects', icon: '🚀' },
+            { id: 'testimonials', label: 'Reviews', icon: '💬' },
+            { id: 'contact', label: 'Contact', icon: '📧' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => scrollToSection(item.id === 'home' ? 'hero' : item.id)}
+              className={`group relative flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 ${
+                theme === "dark"
+                  ? "hover:bg-neon-pink/20 text-gray-300 hover:text-neon-pink"
+                  : "hover:bg-pink-500/20 text-gray-600 hover:text-pink-600"
+              }`}
+              title={item.label}
+            >
+              <span className="text-lg">{item.icon}</span>
+              <span className={`text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute left-full ml-3 whitespace-nowrap px-2 py-1 rounded ${
+                theme === "dark"
+                  ? "bg-gray-800 text-white border border-neon-pink/30"
+                  : "bg-white text-gray-800 border border-pink-300/50 shadow-md"
+              }`}>
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
       {/* Hero Section with smooth background transitions */}
       <section 
+        id="hero"
         className={`min-h-[100vh] flex items-center container mx-auto px-4 py-20 md:py-32 relative`}
         style={{
           transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)"
@@ -413,11 +373,11 @@ const Index = () => {
           {/* Left side - Avatar with enhanced animations */}
           <div className="flex flex-col justify-center items-center space-y-6">
             <div className="flex flex-col items-center space-y-4 lg:-translate-x-8">
-              <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+              <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center group/avatar">
                 <img
                   src="/avatar.png"
                   alt="Sumit Kumar Avatar"
-                  className={`absolute inset-0 w-full h-full object-cover animate-float border-4 transition-all duration-1000 ${
+                  className={`absolute inset-0 w-full h-full object-cover animate-bounce-lr border-4 transition-all duration-1000 group-hover/avatar:animate-float-enhanced ${
                     theme === "dark" ? "border-neon-pink" : "border-pink-500"
                   }`}
                   style={{
@@ -430,7 +390,14 @@ const Index = () => {
                     objectPosition: "center center",
                     borderRadius: "30%",
                     filter: isTransitioning ? "blur(2px)" : "blur(0px)",
-                    transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)"
+                    transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                    transform: "scale(1)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 />
                 
@@ -506,11 +473,13 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 transition-all duration-500 magnetic ${theme === "dark" 
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
                   ? "border-neon-pink bg-transparent text-neon-pink hover:bg-neon-pink hover:text-black" 
                   : "border-pink-500 bg-transparent text-pink-600 hover:bg-pink-500 hover:text-white shadow-lg shadow-pink-500/20"} 
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
-                onClick={() => scrollToSection('projects')}
+                onClick={() => {
+                  scrollToSection('projects');
+                }}
               >
                 <span className="relative z-10">View Projects</span>
                 <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
@@ -522,7 +491,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 transition-all duration-500 magnetic ${theme === "dark" 
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
                   ? "border-neon-blue bg-transparent text-neon-blue hover:bg-neon-blue hover:text-black" 
                   : "border-rose-500 bg-transparent text-rose-600 hover:bg-rose-500 hover:text-white shadow-lg shadow-rose-500/20"} 
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
@@ -540,11 +509,13 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className={`border-2 transition-all duration-500 magnetic ${theme === "dark" 
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
                   ? "border-neon-purple bg-transparent text-neon-purple hover:bg-neon-purple hover:text-black" 
                   : "border-pink-600 bg-transparent text-pink-700 hover:bg-pink-600 hover:text-white shadow-lg shadow-pink-600/20"} 
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
-                onClick={() => scrollToSection('contact')}
+                onClick={() => {
+                  scrollToSection('contact');
+                }}
               >
                 <span className="relative z-10">Hire Me</span>
                 <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
@@ -558,13 +529,13 @@ const Index = () => {
       </section>
 
       {/* About Me & Tech Stack Section - MOVED DOWN */}
-      <section id="about" className={`container mx-auto px-4 py-32 mt-20 relative ${
+      <section id="about" className={`container mx-auto px-4 py-32 mt-20 relative scroll-reveal ${
         theme === "light" ? "text-gray-800" : ""
-      }`} data-reveal="up">
+      }`}>
         
         <div className="grid lg:grid-cols-2 gap-16 relative z-10">
           {/* About Me */}
-          <div data-reveal="left">
+          <div>
             <h2 className="text-3xl md:text-4xl font-michroma font-bold mb-8">
               <span className={`${theme === "dark" 
                 ? "bg-gradient-to-r from-neon-purple to-neon-pink" 
@@ -1108,7 +1079,7 @@ const Index = () => {
           </div>
 
           {/* Tech Stack */}
-          <div data-reveal="right">
+          <div>
             <h2 className="text-3xl md:text-4xl font-michroma font-bold mb-8">
               <span className={`${theme === "dark" 
                 ? "bg-gradient-to-r from-neon-blue to-neon-cyan" 
@@ -1130,21 +1101,17 @@ const Index = () => {
               ].map((tech, index) => (
                 <div
                   key={index}
-                  data-reveal="up"
-                  className={`flex flex-col items-center space-y-2 p-4 rounded-lg magnetic ${
+                  className={`flex flex-col items-center space-y-2 p-4 rounded-lg ${
                     theme === "dark" 
                       ? "bg-gray-800/30 border border-gray-700 hover:border-neon-blue/50" 
                       : "bg-gradient-to-br from-white/90 to-pink-50/80 border border-pink-200/60 hover:border-pink-400/60 shadow-lg shadow-pink-500/10 hover:shadow-pink-500/20 backdrop-blur-sm"
-                  } transition-all duration-300 group hover:scale-105 hover:-translate-y-1`}
-                  style={{
-                    ...(theme === "light" ? {
-                      backdropFilter: "blur(10px)",
-                      background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(252, 231, 243, 0.6) 100%)"
-                    } : {}),
-                    animationDelay: `${index * 0.1}s`
-                  }}
+                  } transition-all duration-150 group hover:scale-105 hover:-translate-y-1`}
+                  style={theme === "light" ? {
+                    backdropFilter: "blur(10px)",
+                    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(252, 231, 243, 0.6) 100%)"
+                  } : {}}
                 >
-                  <div className="text-3xl group-hover:scale-110 transition-transform duration-150 group-hover:rotate-12">
+                  <div className="text-3xl group-hover:scale-110 transition-transform duration-150">
                     {tech.icon}
                   </div>
                   <span className={`text-sm ${
@@ -1162,8 +1129,8 @@ const Index = () => {
       </section>
 
       {/* Projects Section */}
-      <section id="projects" className="container mx-auto px-4 py-32 relative" data-reveal="up">
-        <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16" data-reveal="up">
+      <section id="projects" className="container mx-auto px-4 py-32 relative scroll-reveal">
+        <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
           <span className={`${theme === "dark" 
             ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
             : "bg-gradient-to-r from-pink-600 to-rose-600"} bg-clip-text text-transparent`}>
@@ -1174,8 +1141,7 @@ const Index = () => {
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {/* Project 1 - CivicCircle */}
           <Card
-            data-reveal="left"
-            className={`project-card ${
+            className={`scroll-reveal slide-left ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-cyan/30 hover:border-neon-pink/50 shadow-2xl shadow-neon-cyan/20 hover:shadow-neon-pink/30" 
                 : "bg-gradient-to-br from-white/95 to-pink-50/90 border border-pink-200/60 hover:border-pink-400/70 shadow-xl shadow-pink-500/15 hover:shadow-pink-500/30 backdrop-blur-lg"
@@ -1302,8 +1268,7 @@ const Index = () => {
 
           {/* Project 2 - SumoArts */}
           <Card
-            data-reveal="right"
-            className={`project-card ${
+            className={`scroll-reveal slide-right ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-purple/30 hover:border-neon-cyan/50 shadow-2xl shadow-neon-purple/20 hover:shadow-neon-cyan/30" 
                 : "bg-gradient-to-br from-white/95 to-rose-50/90 border border-rose-200/60 hover:border-rose-400/70 shadow-xl shadow-rose-500/15 hover:shadow-rose-500/30 backdrop-blur-lg"
@@ -1430,8 +1395,7 @@ const Index = () => {
 
           {/* Project 3 - RentCircle */}
           <Card
-            data-reveal="left"
-            className={`project-card ${
+            className={`scroll-reveal slide-left ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-blue/30 hover:border-neon-purple/50 shadow-2xl shadow-neon-blue/20 hover:shadow-neon-purple/30" 
                 : "bg-gradient-to-br from-white/95 to-blue-50/90 border border-blue-200/60 hover:border-blue-400/70 shadow-xl shadow-blue-500/15 hover:shadow-blue-500/30 backdrop-blur-lg"
@@ -1558,7 +1522,7 @@ const Index = () => {
 
           {/* Project 4 - TalkTactics */}
           <Card
-            className={`${
+            className={`scroll-reveal slide-right ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-pink/30 hover:border-neon-blue/50 shadow-2xl shadow-neon-pink/20 hover:shadow-neon-blue/30" 
                 : "bg-gradient-to-br from-white/95 to-green-50/90 border border-green-200/60 hover:border-green-400/70 shadow-xl shadow-green-500/15 hover:shadow-green-500/30 backdrop-blur-lg"
@@ -1576,7 +1540,7 @@ const Index = () => {
             }`}></div>
             
             {/* Top gradient bar */}
-                       <div className={`absolute top-0 left-0 w-full h-1 ${
+            <div className={`absolute top-0 left-0 w-full h-1 ${
               theme === "dark" 
                 ? "bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue" 
                 : "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600"
@@ -1700,7 +1664,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="container mx-auto px-4 py-32 relative">
+      <section id="testimonials" className="container mx-auto px-4 py-32 relative scroll-reveal">
         <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
           <span className={`${theme === "dark" 
             ? "bg-gradient-to-r from-neon-pink to-neon-purple" 
@@ -1793,10 +1757,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Send Message Section - Updated with Working EmailJS */}
-      <section id="contact" className="container mx-auto px-4 py-32 relative" data-reveal="up">
+      {/* Send Message Section - Updated */}
+      <section id="contact" className="container mx-auto px-4 py-32 relative scroll-reveal">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16" data-reveal="up">
+          <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
             <span className={`${theme === "dark" 
               ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
               : "bg-gradient-to-r from-rose-600 to-pink-600"} bg-clip-text text-transparent`}>
@@ -1809,16 +1773,10 @@ const Index = () => {
               ? "bg-gray-800/50 border-gray-700" 
               : "bg-gradient-to-br from-white/95 to-pink-50/80 border border-pink-200/70 shadow-2xl shadow-pink-500/20 backdrop-blur-xl"
           } p-8 relative overflow-hidden`}
-          data-reveal="up"
           style={theme === "light" ? {
             background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
             backdropFilter: "blur(25px)"
           } : {}}>
-            
-            {/* Decorative elements */}
-            {theme === "light" && (
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500/60 to-rose-500/60"></div>
-            )}
             
             {/* Success Message */}
             {isSubmitted && (
@@ -1829,7 +1787,7 @@ const Index = () => {
               } flex items-center space-x-3 animate-in slide-in-from-top-4 duration-300`}>
                 <CheckCircle className="w-5 h-5" />
                 <p className="font-medium">
-                  🎉 Message sent successfully! I'll get back to you soon.
+                  Message sent successfully! I'll get back to you soon.
                 </p>
               </div>
             )}
@@ -1841,14 +1799,14 @@ const Index = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    placeholder="Your Name *"
+                    placeholder="Your Name"
                     required
                     disabled={isSubmitting}
                     className={`${
                       theme === "dark" 
                         ? "bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-neon-blue focus:ring-neon-blue/20" 
                         : "bg-pink-50/50 border-pink-300 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500/20"
-                    } disabled:opacity-50 transition-all duration-200`}
+                    } disabled:opacity-50`}
                   />
                 </div>
                 <div>
@@ -1857,14 +1815,14 @@ const Index = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Your Email *"
+                    placeholder="Your Email"
                     required
                     disabled={isSubmitting}
                     className={`${
                       theme === "dark" 
                         ? "bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-neon-blue focus:ring-neon-blue/20" 
                         : "bg-pink-50/50 border-pink-300 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500/20"
-                    } disabled:opacity-50 transition-all duration-200`}
+                    } disabled:opacity-50`}
                   />
                 </div>
               </div>
@@ -1874,7 +1832,7 @@ const Index = () => {
                   name="message"
                   value={formData.message}
                   onChange={handleInputChange}
-                  placeholder="Your Message *"
+                  placeholder="Your Message"
                   rows={6}
                   required
                   disabled={isSubmitting}
@@ -1882,7 +1840,7 @@ const Index = () => {
                     theme === "dark" 
                       ? "bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-neon-blue focus:ring-neon-blue/20" 
                       : "bg-pink-50/50 border-pink-300 text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500/20"
-                  } resize-none disabled:opacity-50 transition-all duration-200`}
+                  } resize-none disabled:opacity-50`}
                 />
               </div>
 
@@ -1900,12 +1858,12 @@ const Index = () => {
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                      <span>Sending Message...</span>
+                      <span>Sending...</span>
                     </>
                   ) : isSubmitted ? (
                     <>
                       <CheckCircle className="w-4 h-4" />
-                      <span>Message Sent! ✨</span>
+                      <span>Sent Successfully!</span>
                     </>
                   ) : (
                     <>
@@ -1916,25 +1874,6 @@ const Index = () => {
                 </div>
               </Button>
             </form>
-
-            {/* Contact info footer */}
-            <div className={`mt-6 pt-6 border-t ${
-              theme === "dark" ? "border-gray-700" : "border-pink-200"
-            } text-center`}>
-              <p className={`text-sm ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
-              }`}>
-                Or reach me directly at{" "}
-                <a 
-                  href="mailto:sksumitboss123@gmail.com" 
-                  className={`font-medium ${
-                    theme === "dark" ? "text-neon-cyan hover:text-neon-blue" : "text-pink-600 hover:text-rose-600"
-                  } transition-colors duration-200`}
-                >
-                  sksumitboss123@gmail.com
-                </a>
-              </p>
-            </div>
           </Card>
         </div>
       </section>
