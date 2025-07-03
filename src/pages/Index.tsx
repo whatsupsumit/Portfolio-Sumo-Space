@@ -16,6 +16,8 @@ const Index = () => {
   const [showBackground, setShowBackground] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState('hero');
+  const [isNavExpanded, setIsNavExpanded] = useState(false);
   
   // Contact form states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +108,32 @@ const Index = () => {
     return () => {
       revealElements.forEach((el) => observer.unobserve(el));
     };
+  }, []);
+
+  // Section tracking for active navigation
+  useEffect(() => {
+    const sections = ['hero', 'about', 'projects', 'testimonials', 'contact'];
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { 
+        threshold: [0.3, 0.5, 0.7],
+        rootMargin: '-20% 0px -20% 0px' 
+      }
+    );
+
+    sections.forEach((sectionId) => {
+      const element = document.getElementById(sectionId);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   // Handle form input changes
@@ -323,40 +351,99 @@ const Index = () => {
         </Button>
       </div>
 
-      {/* Floating Navigation Menu */}
+      {/* Cool Floating Navigation Menu */}
       <div className="fixed left-6 top-1/2 transform -translate-y-1/2 z-40 hidden lg:block">
-        <nav className={`flex flex-col space-y-3 p-3 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:scale-105 ${
-          theme === "dark" 
-            ? "bg-gray-800/70 border border-neon-pink/30 hover:border-neon-pink/50 hover:shadow-lg hover:shadow-neon-pink/20" 
-            : "bg-white/80 border border-pink-300/50 shadow-lg shadow-pink-500/10 hover:border-pink-400/70 hover:shadow-xl hover:shadow-pink-500/20"
-        }`}>
-          {[
-            { id: 'home', label: 'Home', icon: '🏠' },
-            { id: 'about', label: 'About', icon: '👨‍💻' },
-            { id: 'projects', label: 'Projects', icon: '🚀' },
-            { id: 'testimonials', label: 'Reviews', icon: '💬' },
-            { id: 'contact', label: 'Contact', icon: '📧' }
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => scrollToSection(item.id === 'home' ? 'hero' : item.id)}
-              className={`group relative flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105 ${
-                theme === "dark"
-                  ? "hover:bg-neon-pink/20 text-gray-300 hover:text-neon-pink"
-                  : "hover:bg-pink-500/20 text-gray-600 hover:text-pink-600"
+        <nav 
+          className={`relative flex flex-col space-y-3 p-3 rounded-2xl backdrop-blur-lg transition-all duration-300 group/nav ${
+            theme === "dark" 
+              ? "bg-gray-900/85 border border-neon-pink/30 shadow-xl" 
+              : "bg-white/90 border border-pink-300/50 shadow-xl shadow-pink-500/10"
+          }`}
+        >
+          
+          {/* Subtle hover glow */}
+          <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover/nav:opacity-100 transition-opacity duration-300 ${
+            theme === "dark"
+              ? "shadow-lg shadow-neon-pink/20"
+              : "shadow-lg shadow-pink-500/20"
+          }`}></div>
+
+          {/* Navigation items */}
+          <div className="relative z-10 space-y-2">
+            {[
+              { id: 'hero', label: 'Home', icon: '🏠' },
+              { id: 'about', label: 'About', icon: '👨‍💻' },
+              { id: 'projects', label: 'Projects', icon: '🚀' },
+              { id: 'testimonials', label: 'Reviews', icon: '💬' },
+              { id: 'contact', label: 'Contact', icon: '📧' }
+            ].map((item, index) => {
+              const isActive = activeSection === item.id;
+              return (
+                <div key={item.id} className="relative group/item">
+                  <button
+                    onClick={() => scrollToSection(item.id === 'hero' ? 'hero' : item.id)}
+                    className={`relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? theme === "dark"
+                          ? "bg-neon-pink/25 border-2 border-neon-pink/50 shadow-md shadow-neon-pink/30"
+                          : "bg-pink-500/20 border-2 border-pink-500/50 shadow-md shadow-pink-500/30"
+                        : theme === "dark"
+                          ? "bg-gray-800/50 border border-gray-700/50 hover:border-neon-pink/40 hover:bg-gray-700/70 hover:scale-105"
+                          : "bg-white/70 border border-pink-200/40 hover:border-pink-400/60 hover:bg-pink-50/80 hover:scale-105"
+                    }`}
+                  >
+                    {/* Simple icon */}
+                    <span className={`text-xl transition-all duration-200 ${
+                      isActive 
+                        ? theme === "dark" ? "text-neon-pink" : "text-pink-600"
+                        : theme === "dark" ? "text-gray-300 group-hover/item:text-neon-pink" : "text-gray-600 group-hover/item:text-pink-600"
+                    }`}>
+                      {item.icon}
+                    </span>
+                  </button>
+
+                  {/* Clean tooltip */}
+                  <div className={`absolute left-full ml-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-all duration-200 pointer-events-none ${
+                    theme === "dark"
+                      ? "bg-gray-800/95 text-white border border-gray-700"
+                      : "bg-white/95 text-gray-800 border border-gray-300"
+                  } px-3 py-1 rounded-lg backdrop-blur-sm text-sm font-medium whitespace-nowrap shadow-lg`}>
+                    {item.label}
+                    
+                    {/* Simple arrow */}
+                    <div className={`absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent ${
+                      theme === "dark" 
+                        ? "border-r-gray-800/95" 
+                        : "border-r-white/95"
+                    }`}></div>
+                  </div>
+
+                  {/* Active indicator line */}
+                  {isActive && (
+                    <div className={`absolute -right-1 top-1/2 transform -translate-y-1/2 w-0.5 h-6 rounded-full ${
+                      theme === "dark"
+                        ? "bg-neon-pink"
+                        : "bg-pink-500"
+                    }`}></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Minimal progress indicator */}
+          <div className={`mt-2 w-full h-0.5 rounded-full overflow-hidden ${
+            theme === "dark" ? "bg-gray-700/50" : "bg-pink-200/50"
+          }`}>
+            <div 
+              className={`h-full transition-all duration-300 ${
+                theme === "dark" 
+                  ? "bg-neon-pink" 
+                  : "bg-pink-500"
               }`}
-              title={item.label}
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span className={`text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute left-full ml-3 whitespace-nowrap px-2 py-1 rounded ${
-                theme === "dark"
-                  ? "bg-gray-800 text-white border border-neon-pink/30"
-                  : "bg-white text-gray-800 border border-pink-300/50 shadow-md"
-              }`}>
-                {item.label}
-              </span>
-            </button>
-          ))}
+              style={{ width: `${scrollProgress * 100}%` }}
+            ></div>
+          </div>
         </nav>
       </div>
 
@@ -377,7 +464,7 @@ const Index = () => {
                 <img
                   src="/avatar.png"
                   alt="Sumit Kumar Avatar"
-                  className={`absolute inset-0 w-full h-full object-cover animate-bounce-lr border-4 transition-all duration-1000 group-hover/avatar:animate-float-enhanced ${
+                  className={`absolute inset-0 w-full h-full object-cover animate-smooth-bounce border-4 transition-all duration-1000 group-hover/avatar:scale-110 ${
                     theme === "dark" ? "border-neon-pink" : "border-pink-500"
                   }`}
                   style={{
