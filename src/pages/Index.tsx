@@ -906,12 +906,12 @@ const Index = () => {
                           🛠️ Notable Projects
                         </h4>
                         
-                        {/* Project 1 - RentCircle */}
+                        {/* Project 1 - RentEase */}
                         <div className="mb-4 pb-4 border-b border-gray-600/30">
                           <h5 className={`font-semibold ${
                             theme === "dark" ? "text-neon-cyan" : "text-pink-600"
                           }`}>
-                            RentCircle
+                            RentEase
                           </h5>
                           <p className={`text-sm mt-1 ${
                             theme === "dark" ? "text-gray-300" : "text-gray-700"
@@ -934,12 +934,12 @@ const Index = () => {
                           </p>
                         </div>
 
-                        {/* Project 3 - CivicCircle */}
+                        {/* Project 3 - HelpHive */}
                         <div>
                           <h5 className={`font-semibold ${
                             theme === "dark" ? "text-neon-cyan" : "text-pink-600"
                           }`}>
-                            CivicCircle
+                            HelpHive
                           </h5>
                           <p className={`text-sm mt-1 ${
                             theme === "dark" ? "text-gray-300" : "text-gray-700"
@@ -1226,7 +1226,7 @@ const Index = () => {
         </h2>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {/* Project 1 - CivicCircle */}
+          {/* Project 1 - HelpHive */}
           <Card
             className={`scroll-reveal slide-left ${
               theme === "dark" 
@@ -1284,7 +1284,7 @@ const Index = () => {
                       ? "text-white group-hover:text-neon-cyan" 
                       : "text-gray-800 group-hover:text-pink-600"
                   } transition-colors duration-300`}>
-                    CivicCircle
+                    HelpHive
                   </h3>
                   <p className={`text-sm font-medium ${
                     theme === "dark" ? "text-neon-cyan/80" : "text-pink-600/80"
@@ -1441,7 +1441,7 @@ const Index = () => {
                   {['React.js', 'Node.js', 'Unsplash API', 'Firebase', 'Tailwind CSS'].map((tech, techIndex) => (
                     <Badge
                       key={techIndex}
-                      className={`${
+                      className={`$
                         theme === "dark" 
                           ? "bg-neon-purple/10 text-neon-purple border border-neon-purple/30 hover:bg-neon-purple/20 hover:scale-105" 
                           : "bg-rose-500/10 text-rose-600 border border-rose-500/30 hover:bg-rose-500/20 hover:scale-105"
@@ -1455,32 +1455,38 @@ const Index = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
-                <Button
-                  size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "bg-neon-purple/20 text-neon-purple border border-neon-purple/30 hover:bg-neon-purple hover:text-black" 
-                      : "bg-rose-500/20 text-rose-600 border border-rose-500/30 hover:bg-rose-500 hover:text-white"
-                  } transition-all duration-200 hover:scale-105`}
-                >
-                  View Demo
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan hover:text-black" 
-                      : "border-pink-500/30 text-pink-600 hover:bg-pink-500 hover:text-white"
-                  } transition-all duration-200 hover:scale-105`}
-                >
-                  GitHub
-                </Button>
+                <a href="https://sumo-arts.vercel.app/" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    size="sm"
+                    className={`${
+                      theme === "dark" 
+                        ? "bg-neon-purple/20 text-neon-purple border border-neon-purple/30 hover:bg-neon-purple hover:text-black" 
+                        : "bg-rose-500/20 text-rose-600 border border-rose-500/30 hover:bg-rose-500 hover:text-white"
+                    } transition-all duration-200 hover:scale-105`}
+                  >
+                    Live Demo
+                  </Button>
+                </a>
+                <a href="https://github.com/whatsupsumit/SumoArts" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`${
+                      theme === "dark" 
+                        ? "border-neon-purple text-neon-purple hover:bg-neon-purple/10" 
+                        : "border-rose-500 text-rose-600 hover:bg-rose-100"
+                    } transition-all duration-200 hover:scale-105`}
+                  >
+                    GitHub
+                  </Button>
+                </a>
               </div>
+
+              {/* Action Buttons (keep only the correct set with external links) */}
             </div>
           </Card>
 
-          {/* Project 3 - RentCircle */}
+          {/* Project 3 - RentEase */}
           <Card
             className={`scroll-reveal slide-left ${
               theme === "dark" 
@@ -1538,7 +1544,7 @@ const Index = () => {
                       ? "text-white group-hover:text-neon-blue" 
                       : "text-gray-800 group-hover:text-blue-600"
                   } transition-colors duration-300`}>
-                    RentCircle
+                    RentEase
                   </h3>
                   <p className={`text-sm font-medium ${
                     theme === "dark" ? "text-neon-blue/80" : "text-blue-600/80"
@@ -1737,17 +1743,24 @@ const Index = () => {
 
         {/* View All Projects Button */}
         <div className="text-center mt-16">
-          <Button
-            size="lg"
-            className={`${
-              theme === "dark" 
-                ? "bg-gradient-to-r from-neon-cyan to-neon-purple hover:from-neon-purple hover:to-neon-cyan text-white" 
-                : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg shadow-pink-500/30"
-            } font-semibold px-8 py-3 transition-all duration-300 hover:scale-105 hover:-translate-y-1`}
-          >
-            View All Projects →
-          </Button>
-        </div>
+  <a
+    href="https://github.com/whatsupsumit?tab=repositories"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <Button
+      size="lg"
+      className={`${
+        theme === "dark" 
+          ? "bg-gradient-to-r from-neon-cyan to-neon-purple hover:from-neon-purple hover:to-neon-cyan text-white" 
+          : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg shadow-pink-500/30"
+      } font-semibold px-8 py-3 transition-all duration-300 hover:scale-105 hover:-translate-y-1`}
+    >
+      View All Projects →
+    </Button>
+  </a>
+</div>
+
       </section>
 
       {/* Testimonials Section */}
