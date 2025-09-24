@@ -36,9 +36,26 @@ const Index = () => {
   const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
   useEffect(() => {
-    // Initialize EmailJS
     emailjs.init(EMAILJS_PUBLIC_KEY);
   }, []);
+
+  // Parallax effect for background
+  useEffect(() => {
+    if (theme !== "dark") return;
+    
+    const handleScroll = () => {
+      const scrolled = window.pageYOffset;
+      const parallaxElements = document.querySelectorAll('.parallax-element');
+      parallaxElements.forEach((element, index) => {
+        const speed = (index + 1) * 0.1;
+        const yPos = -(scrolled * speed);
+        (element as HTMLElement).style.transform = `translateY(${yPos}px)`;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [theme]);
 
   // Initialize Lenis for smooth scrolling
   useEffect(() => {
@@ -241,8 +258,14 @@ const Index = () => {
       className={`min-h-screen relative overflow-x-hidden`}
       style={{
         background: theme === "dark" 
-          ? "linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #1a1a2e 75%, #000000 100%)"
+          ? `
+            linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.9) 25%, rgba(15, 52, 96, 0.85) 50%, rgba(26, 26, 46, 0.9) 75%, rgba(0, 0, 0, 0.95) 100%),
+            url('/cool_blue_ocean_mountain_tree_branches_nature_background_hd_dark_blue-1920x1080.jpg')
+          `
           : "linear-gradient(135deg, #fdf2f8 0%, #fef7f7 25%, #fff1f2 50%, #fdf2f8 75%, rgb(249, 215, 224) 100%)",
+        backgroundSize: theme === "dark" ? "cover" : "auto",
+        backgroundPosition: theme === "dark" ? "center center" : "initial",
+        backgroundAttachment: theme === "dark" ? "fixed" : "initial",
         color: theme === "dark" ? "#ffffff" : "#111827",
         transition: "all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
       }}
@@ -259,6 +282,50 @@ const Index = () => {
       
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Creative Background Overlay for Dark Mode */}
+        {theme === "dark" && (
+          <>
+            {/* Subtle pattern overlay */}
+            <div 
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.08) 0%, transparent 50%),
+                  linear-gradient(45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.02) 75%)
+                `,
+                backgroundSize: "400px 400px, 300px 300px, 60px 60px"
+              }}
+            ></div>
+            
+            {/* Enhanced floating neon elements */}
+            <div 
+              className="absolute top-1/4 left-1/6 w-40 h-40 rounded-full opacity-15 animate-float"
+              style={{
+                background: "radial-gradient(circle, rgba(255, 0, 255, 0.3) 0%, rgba(0, 255, 255, 0.1) 70%, transparent 100%)",
+                filter: "blur(40px)",
+                animation: "float 12s ease-in-out infinite"
+              }}
+            ></div>
+            <div 
+              className="absolute top-2/3 right-1/4 w-32 h-32 rounded-full opacity-12 animate-float"
+              style={{
+                background: "radial-gradient(circle, rgba(0, 255, 255, 0.4) 0%, rgba(255, 0, 255, 0.1) 70%, transparent 100%)",
+                filter: "blur(35px)",
+                animation: "float 8s ease-in-out infinite reverse"
+              }}
+            ></div>
+            <div 
+              className="absolute bottom-1/4 left-1/3 w-24 h-24 rounded-full opacity-18 animate-float"
+              style={{
+                background: "radial-gradient(circle, rgba(0, 100, 255, 0.3) 0%, transparent 70%)",
+                filter: "blur(25px)",
+                animation: "float 10s ease-in-out infinite"
+              }}
+            ></div>
+          </>
+        )}
+        
         {/* Light mode floating elements */}
         {theme === "light" && (
           <>
@@ -276,28 +343,6 @@ const Index = () => {
                 background: "radial-gradient(circle, rgba(219, 39, 119, 0.4) 0%, transparent 70%)",
                 filter: "blur(15px)",
                 animation: "float 6s ease-in-out infinite reverse"
-              }}
-            ></div>
-          </>
-        )}
-        
-        {/* Dark mode floating elements */}
-        {theme === "dark" && (
-          <>
-            <div 
-              className="absolute top-1/3 right-1/3 w-40 h-40 rounded-full opacity-10 animate-float"
-              style={{
-                background: "radial-gradient(circle, #ff00ff 0%, transparent 70%)",
-                filter: "blur(30px)",
-                animation: "float 10s ease-in-out infinite"
-              }}
-            ></div>
-            <div 
-              className="absolute bottom-1/4 left-1/3 w-28 h-28 rounded-full opacity-15 animate-float"
-              style={{
-                background: "radial-gradient(circle, #00ffff 0%, transparent 70%)",
-                filter: "blur(25px)",
-                animation: "float 7s ease-in-out infinite reverse"
               }}
             ></div>
           </>
@@ -356,9 +401,13 @@ const Index = () => {
         <nav 
           className={`relative flex flex-col space-y-3 p-3 rounded-2xl backdrop-blur-lg transition-all duration-300 group/nav ${
             theme === "dark" 
-              ? "bg-gray-900/85 border border-neon-pink/30 shadow-xl" 
+              ? "bg-gray-900/90 border border-neon-pink/30 shadow-xl shadow-black/30" 
               : "bg-white/90 border border-pink-300/50 shadow-xl shadow-pink-500/10"
           }`}
+          style={theme === "dark" ? {
+            background: "linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%)",
+            backdropFilter: "blur(25px)"
+          } : {}}
         >
           
           {/* Subtle hover glow */}
@@ -459,12 +508,12 @@ const Index = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center w-full relative z-10">
           {/* Left side - Avatar with enhanced animations */}
           <div className="flex flex-col justify-center items-center space-y-6">
-            <div className="flex flex-col items-center space-y-4 lg:-translate-x-8">
+            <div className="flex flex-col items-center space-y-4 lg:translate-x-4">
               <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center group/avatar">
                 <img
                   src="/avatar.png"
                   alt="Sumit Kumar Avatar"
-                  className={`absolute inset-0 w-full h-full object-cover animate-smooth-bounce border-4 transition-all duration-1000 group-hover/avatar:scale-110 ${
+                  className={`w-full h-full object-cover animate-smooth-bounce border-4 transition-all duration-1000 group-hover/avatar:scale-110 ${
                     theme === "dark" ? "border-neon-pink" : "border-pink-500"
                   }`}
                   style={{
@@ -474,7 +523,8 @@ const Index = () => {
                     background: theme === "dark" 
                       ? "black" 
                       : "linear-gradient(135deg, rgba(252, 231, 243, 0.8) 0%, rgba(251, 207, 232, 0.6) 50%, rgba(250, 182, 217, 0.4) 100%)",
-                    objectPosition: "center center",
+                    objectPosition: "43% center",
+                    objectFit: "cover",
                     borderRadius: "30%",
                     filter: isTransitioning ? "blur(2px)" : "blur(0px)",
                     transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -557,25 +607,23 @@ const Index = () => {
 
             {/* Enhanced buttons with smooth transitions */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button
-                variant="outline"
-                size="lg"
-                className={`border-2 transition-all duration-500 ${theme === "dark" 
-                  ? "border-neon-pink bg-transparent text-neon-pink hover:bg-neon-pink hover:text-black" 
-                  : "border-pink-500 bg-transparent text-pink-600 hover:bg-pink-500 hover:text-white shadow-lg shadow-pink-500/20"} 
-                  font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
-                onClick={() => {
-                  scrollToSection('projects');
-                }}
-              >
-                <span className="relative z-10">View Projects</span>
-                <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
-                  ? "bg-gradient-to-r from-neon-pink/20 to-neon-purple/20"
-                  : "bg-gradient-to-r from-pink-500/20 to-rose-500/20"
-                } opacity-0 group-hover:opacity-100`}></div>
-              </Button>
-
-              <Button
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className={`border-2 transition-all duration-500 ${theme === "dark" 
+                    ? "border-neon-pink bg-transparent text-neon-pink hover:bg-neon-pink hover:text-black" 
+                    : "border-pink-500 bg-transparent text-pink-600 hover:bg-pink-500 hover:text-white shadow-lg shadow-pink-500/20"} 
+                    font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
+                  onClick={() => {
+                    scrollToSection('projects');
+                  }}
+                >
+                  <span className="relative z-10">View Projects</span>
+                  <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
+                    ? "bg-gradient-to-r from-neon-pink/20 to-neon-purple/20"
+                    : "bg-gradient-to-r from-pink-500/20 to-rose-500/20"
+                  } opacity-0 group-hover:opacity-100`}></div>
+                </Button>              <Button
                 variant="outline"
                 size="lg"
                 className={`border-2 transition-all duration-500 ${theme === "dark" 
@@ -619,6 +667,15 @@ const Index = () => {
       <section id="about" className={`container mx-auto px-4 py-32 mt-20 relative scroll-reveal ${
         theme === "light" ? "text-gray-800" : ""
       }`}>
+        
+        {/* Section Number Indicator - Inspired by bjornflow */}
+        <div className={`fixed right-8 top-1/2 transform -translate-y-1/2 z-30 hidden xl:block ${
+          theme === "dark" ? "text-neon-cyan/60" : "text-pink-500/60"
+        } font-mono text-sm tracking-wider`}>
+          <div className="writing-mode-vertical text-orientation-mixed rotate-180">
+            ABT_ME_001
+          </div>
+        </div>
         
         <div className="grid lg:grid-cols-2 gap-16 relative z-10">
           {/* About Me */}
@@ -1217,6 +1274,16 @@ const Index = () => {
 
       {/* Projects Section */}
       <section id="projects" className="container mx-auto px-4 py-32 relative scroll-reveal">
+        
+        {/* Section Number Indicator */}
+        <div className={`fixed right-8 top-1/2 transform -translate-y-1/2 z-30 hidden xl:block ${
+          theme === "dark" ? "text-neon-blue/60" : "text-rose-500/60"
+        } font-mono text-sm tracking-wider`}>
+          <div className="writing-mode-vertical text-orientation-mixed rotate-180">
+            PROJ_002
+          </div>
+        </div>
+
         <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
           <span className={`${theme === "dark" 
             ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
@@ -1230,13 +1297,16 @@ const Index = () => {
           <Card
             className={`scroll-reveal slide-left ${
               theme === "dark" 
-                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-cyan/30 hover:border-neon-pink/50 shadow-2xl shadow-neon-cyan/20 hover:shadow-neon-pink/30" 
+                ? "bg-gradient-to-br from-gray-900/90 to-gray-800/80 border border-neon-cyan/30 hover:border-neon-pink/50 shadow-2xl shadow-neon-cyan/20 hover:shadow-neon-pink/30 backdrop-blur-xl" 
                 : "bg-gradient-to-br from-white/95 to-pink-50/90 border border-pink-200/60 hover:border-pink-400/70 shadow-xl shadow-pink-500/15 hover:shadow-pink-500/30 backdrop-blur-lg"
             } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
             style={theme === "light" ? {
               background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
               backdropFilter: "blur(15px)"
-            } : {}}
+            } : {
+              background: "linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.9) 50%, rgba(0, 0, 0, 0.8) 100%)",
+              backdropFilter: "blur(20px)"
+            }}
           >
             {/* Animated Background Elements */}
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
@@ -1269,6 +1339,15 @@ const Index = () => {
             )}
 
             <div className="relative z-10 space-y-6">
+              {/* Project Number */}
+              <div className={`absolute -top-4 -left-4 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                theme === "dark" 
+                  ? "bg-neon-cyan text-black" 
+                  : "bg-pink-500 text-white"
+              }`}>
+                01
+              </div>
+              
               {/* Project Header */}
               <div className="flex items-center space-x-4">
                 <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
@@ -1328,27 +1407,31 @@ const Index = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
-                <Button
-                  size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan hover:text-black" 
-                      : "bg-pink-500/20 text-pink-600 border border-pink-500/30 hover:bg-pink-500 hover:text-white"
-                  } transition-all duration-200 hover:scale-105`}
-                >
-                  View Demo
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "border-neon-pink/30 text-neon-pink hover:bg-neon-pink hover:text-black" 
-                      : "border-rose-500/30 text-rose-600 hover:bg-rose-500 hover:text-white"
-                  } transition-all duration-200 hover:scale-105`}
-                >
-                  GitHub
-                </Button>
+                <a href="https://helphiive.vercel.app/" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    size="sm"
+                    className={`${
+                      theme === "dark" 
+                        ? "bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan hover:text-black" 
+                        : "bg-pink-500/20 text-pink-600 border border-pink-500/30 hover:bg-pink-500 hover:text-white"
+                    } transition-all duration-200 hover:scale-105`}
+                  >
+                    View Demo
+                  </Button>
+                </a>
+                <a href="https://github.com/whatsupsumit/HelpHive" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`${
+                      theme === "dark" 
+                        ? "border-neon-pink/30 text-neon-pink hover:bg-neon-pink hover:text-black" 
+                        : "border-rose-500/30 text-rose-600 hover:bg-rose-500 hover:text-white"
+                    } transition-all duration-200 hover:scale-105`}
+                  >
+                    GitHub
+                  </Button>
+                </a>
               </div>
             </div>
           </Card>
@@ -1357,13 +1440,16 @@ const Index = () => {
           <Card
             className={`scroll-reveal slide-right ${
               theme === "dark" 
-                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-purple/30 hover:border-neon-cyan/50 shadow-2xl shadow-neon-purple/20 hover:shadow-neon-cyan/30" 
+                ? "bg-gradient-to-br from-gray-900/90 to-gray-800/80 border border-neon-purple/30 hover:border-neon-cyan/50 shadow-2xl shadow-neon-purple/20 hover:shadow-neon-cyan/30 backdrop-blur-xl" 
                 : "bg-gradient-to-br from-white/95 to-rose-50/90 border border-rose-200/60 hover:border-rose-400/70 shadow-xl shadow-rose-500/15 hover:shadow-rose-500/30 backdrop-blur-lg"
             } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
             style={theme === "light" ? {
               background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 241, 242, 0.8) 50%, rgba(254, 226, 226, 0.6) 100%)",
               backdropFilter: "blur(15px)"
-            } : {}}
+            } : {
+              background: "linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.9) 50%, rgba(0, 0, 0, 0.8) 100%)",
+              backdropFilter: "blur(20px)"
+            }}
           >
             {/* Animated Background Elements */}
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
@@ -1490,13 +1576,16 @@ const Index = () => {
           <Card
             className={`scroll-reveal slide-left ${
               theme === "dark" 
-                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-blue/30 hover:border-neon-purple/50 shadow-2xl shadow-neon-blue/20 hover:shadow-neon-purple/30" 
+                ? "bg-gradient-to-br from-gray-900/90 to-gray-800/80 border border-neon-blue/30 hover:border-neon-purple/50 shadow-2xl shadow-neon-blue/20 hover:shadow-neon-purple/30 backdrop-blur-xl" 
                 : "bg-gradient-to-br from-white/95 to-blue-50/90 border border-blue-200/60 hover:border-blue-400/70 shadow-xl shadow-blue-500/15 hover:shadow-blue-500/30 backdrop-blur-lg"
             } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
             style={theme === "light" ? {
               background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(239, 246, 255, 0.8) 50%, rgba(219, 234, 254, 0.6) 100%)",
               backdropFilter: "blur(15px)"
-            } : {}}
+            } : {
+              background: "linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.9) 50%, rgba(0, 0, 0, 0.8) 100%)",
+              backdropFilter: "blur(20px)"
+            }}
           >
             {/* Animated Background Elements */}
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
@@ -1598,45 +1687,50 @@ const Index = () => {
                 >
                   View Demo
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "border-neon-purple/30 text-neon-purple hover:bg-neon-purple hover:text-black" 
-                      : "border-purple-500/30 text-purple-600 hover:bg-purple-500 hover:text-white"
-                  } transition-all duration-200 hover:scale-105`}
-                >
-                  GitHub
-                </Button>
+                <a href="https://github.com/whatsupsumit/RentEase" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`${
+                      theme === "dark" 
+                        ? "border-neon-purple/30 text-neon-purple hover:bg-neon-purple hover:text-black" 
+                        : "border-purple-500/30 text-purple-600 hover:bg-purple-500 hover:text-white"
+                    } transition-all duration-200 hover:scale-105`}
+                  >
+                    GitHub
+                  </Button>
+                </a>
               </div>
             </div>
           </Card>
 
-          {/* Project 4 - TalkTactics */}
+          {/* Project 4 - The Nexus */}
           <Card
             className={`scroll-reveal slide-right ${
               theme === "dark" 
-                ? "bg-gradient-to-br from-gray-800/80 to-gray-900/60 border border-neon-pink/30 hover:border-neon-blue/50 shadow-2xl shadow-neon-pink/20 hover:shadow-neon-blue/30" 
-                : "bg-gradient-to-br from-white/95 to-green-50/90 border border-green-200/60 hover:border-green-400/70 shadow-xl shadow-green-500/15 hover:shadow-green-500/30 backdrop-blur-lg"
+                ? "bg-gradient-to-br from-gray-900/90 to-gray-800/80 border border-neon-pink/30 hover:border-neon-blue/50 shadow-2xl shadow-neon-pink/20 hover:shadow-neon-blue/30 backdrop-blur-xl" 
+                : "bg-gradient-to-br from-white/95 to-purple-50/90 border border-purple-200/60 hover:border-purple-400/70 shadow-xl shadow-purple-500/15 hover:shadow-purple-500/30 backdrop-blur-lg"
             } transition-all duration-300 p-8 group hover:scale-[1.02] hover:-translate-y-3 relative overflow-hidden`}
             style={theme === "light" ? {
-              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 244, 0.8) 50%, rgba(220, 252, 231, 0.6) 100%)",
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 245, 255, 0.8) 50%, rgba(243, 232, 255, 0.6) 100%)",
               backdropFilter: "blur(15px)"
-            } : {}}
+            } : {
+              background: "linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.9) 50%, rgba(0, 0, 0, 0.8) 100%)",
+              backdropFilter: "blur(20px)"
+            }}
           >
             {/* Animated Background Elements */}
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
               theme === "dark" 
                 ? "bg-gradient-to-br from-neon-pink/5 via-transparent to-neon-blue/5"
-                : "bg-gradient-to-br from-green-500/3 via-transparent to-emerald-500/3"
+                : "bg-gradient-to-br from-purple-500/3 via-transparent to-indigo-500/3"
             }`}></div>
             
             {/* Top gradient bar */}
             <div className={`absolute top-0 left-0 w-full h-1 ${
               theme === "dark" 
                 ? "bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue" 
-                : "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600"
+                : "bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-600"
             }`}></div>
             
             {/* Floating decorative elements */}
@@ -1649,9 +1743,9 @@ const Index = () => {
             
             {theme === "light" && (
               <>
-                <div className="absolute top-6 right-6 w-3 h-3 bg-green-500/60 rounded-full animate-pulse"></div>
-                <div className="absolute bottom-6 left-6 w-2 h-2 bg-emerald-500/60 rounded-full animate-ping"></div>
-                <div className="absolute top-1/2 right-4 w-1 h-8 bg-gradient-to-t from-green-400/20 to-transparent"></div>
+                <div className="absolute top-6 right-6 w-3 h-3 bg-purple-500/60 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-6 left-6 w-2 h-2 bg-indigo-500/60 rounded-full animate-ping"></div>
+                <div className="absolute top-1/2 right-4 w-1 h-8 bg-gradient-to-t from-purple-400/20 to-transparent"></div>
               </>
             )}
 
@@ -1661,22 +1755,22 @@ const Index = () => {
                 <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
                   theme === "dark" 
                     ? "bg-neon-pink/20 border-2 border-neon-pink/40 group-hover:bg-neon-pink/30" 
-                    : "bg-green-500/20 border-2 border-green-500/40 group-hover:bg-green-500/30"
+                    : "bg-purple-500/20 border-2 border-purple-500/40 group-hover:bg-purple-500/30"
                 } transition-all duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}>
-                  🗣️
+                  🎬
                 </div>
                 <div>
                   <h3 className={`text-2xl font-bold ${
                     theme === "dark" 
                       ? "text-white group-hover:text-neon-pink" 
-                      : "text-gray-800 group-hover:text-green-600"
+                      : "text-gray-800 group-hover:text-purple-600"
                   } transition-colors duration-300`}>
-                    TalkTactics
+                    The Nexus
                   </h3>
                   <p className={`text-sm font-medium ${
-                    theme === "dark" ? "text-neon-pink/80" : "text-green-600/80"
+                    theme === "dark" ? "text-neon-pink/80" : "text-purple-600/80"
                   }`}>
-                    Interactive Gaming Platform
+                    Movie Streaming Platform
                   </p>
                 </div>
               </div>
@@ -1685,9 +1779,9 @@ const Index = () => {
               <p className={`${
                 theme === "dark" ? "text-gray-300" : "text-gray-700"
               } text-sm leading-relaxed group-hover:text-opacity-90 transition-all duration-300`}>
-                A multiplayer platform featuring strategic communication games like Chain Story, Truth or Tactical Dare, 
-                and Online Debates. Includes player profiles, real-time interactions, and a collaborative doubt-solving arena 
-                for enhanced learning.
+                An online movie streaming platform with AI chat for movie suggestions and recommendations. Built using React 
+                with Google API, TMDB API, and VidSrc for seamless streaming. Features intelligent movie recommendations, 
+                interactive AI chat, and comprehensive movie database integration.
               </p>
 
               {/* Tech Stack */}
@@ -1698,13 +1792,13 @@ const Index = () => {
                   Tech Stack:
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {['React.js', 'Node.js', 'Express', 'MongoDB', 'WebSockets', 'Firebase Auth'].map((tech, techIndex) => (
+                  {['React.js', 'TMDB API', 'VidSrc API', 'AI Integration', 'Google API', 'Tailwind CSS'].map((tech, techIndex) => (
                     <Badge
                       key={techIndex}
                       className={`${
                         theme === "dark" 
                           ? "bg-neon-pink/10 text-neon-pink border border-neon-pink/30 hover:bg-neon-pink/20 hover:scale-105" 
-                          : "bg-green-500/10 text-green-600 border border-green-500/30 hover:bg-green-500/20 hover:scale-105"
+                          : "bg-purple-500/10 text-purple-600 border border-purple-500/30 hover:bg-purple-500/20 hover:scale-105"
                       } transition-all duration-200 cursor-default`}
                     >
                       {tech}
@@ -1715,23 +1809,25 @@ const Index = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
-                <Button
-                  size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "bg-neon-pink/20 text-neon-pink border border-neon-pink/30 hover:bg-neon-pink hover:text-black" 
-                      : "bg-green-500/20 text-green-600 border border-green-500/30 hover:bg-green-500 hover:text-white"
-                  } transition-all duration-200 hover:scale-105`}
-                >
-                  View Demo
-                </Button>
+                <a href="https://iamnexus.vercel.app/" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    size="sm"
+                    className={`${
+                      theme === "dark" 
+                        ? "bg-neon-pink/20 text-neon-pink border border-neon-pink/30 hover:bg-neon-pink hover:text-black" 
+                        : "bg-purple-500/20 text-purple-600 border border-purple-500/30 hover:bg-purple-500 hover:text-white"
+                    } transition-all duration-200 hover:scale-105`}
+                  >
+                    Live Demo
+                  </Button>
+                </a>
                 <Button
                   variant="outline"
                   size="sm"
                   className={`${
                     theme === "dark" 
                       ? "border-neon-blue/30 text-neon-blue hover:bg-neon-blue hover:text-black" 
-                      : "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
+                      : "border-indigo-500/30 text-indigo-600 hover:bg-indigo-500 hover:text-white"
                   } transition-all duration-200 hover:scale-105`}
                 >
                   GitHub
@@ -1743,23 +1839,23 @@ const Index = () => {
 
         {/* View All Projects Button */}
         <div className="text-center mt-16">
-  <a
-    href="https://github.com/whatsupsumit?tab=repositories"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <Button
-      size="lg"
-      className={`${
-        theme === "dark" 
-          ? "bg-gradient-to-r from-neon-cyan to-neon-purple hover:from-neon-purple hover:to-neon-cyan text-white" 
-          : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg shadow-pink-500/30"
-      } font-semibold px-8 py-3 transition-all duration-300 hover:scale-105 hover:-translate-y-1`}
-    >
-      View All Projects →
-    </Button>
-  </a>
-</div>
+          <a
+            href="https://github.com/whatsupsumit?tab=repositories"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button
+              size="lg"
+              className={`${
+                theme === "dark" 
+                  ? "bg-gradient-to-r from-neon-cyan to-neon-purple hover:from-neon-purple hover:to-neon-cyan text-white" 
+                  : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg shadow-pink-500/30"
+              } font-semibold px-8 py-3 transition-all duration-300 hover:scale-105 hover:-translate-y-1`}
+            >
+              View All Projects →
+            </Button>
+          </a>
+        </div>
 
       </section>
 
@@ -1860,23 +1956,34 @@ const Index = () => {
       {/* Send Message Section - Updated */}
       <section id="contact" className="container mx-auto px-4 py-32 relative scroll-reveal">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-michroma font-bold text-center mb-8">
             <span className={`${theme === "dark" 
               ? "bg-gradient-to-r from-neon-cyan to-neon-blue" 
               : "bg-gradient-to-r from-rose-600 to-pink-600"} bg-clip-text text-transparent`}>
-              Send Message
+              Let's Write The Next Chapter
             </span>
           </h2>
 
+          <div className="text-center mb-12">
+            <p className={`text-lg md:text-xl leading-relaxed ${
+              theme === "dark" ? "text-gray-300" : "text-gray-700"
+            }`}>
+              Every great story needs collaboration. Share your vision, and let's create something extraordinary together.
+            </p>
+          </div>
+
           <Card className={`${
             theme === "dark" 
-              ? "bg-gray-800/50 border-gray-700" 
+              ? "bg-gradient-to-br from-gray-900/95 to-gray-800/90 border border-gray-600/50 backdrop-blur-2xl shadow-2xl shadow-black/30" 
               : "bg-gradient-to-br from-white/95 to-pink-50/80 border border-pink-200/70 shadow-2xl shadow-pink-500/20 backdrop-blur-xl"
           } p-8 relative overflow-hidden`}
           style={theme === "light" ? {
             background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 231, 243, 0.8) 50%, rgba(251, 207, 232, 0.6) 100%)",
             backdropFilter: "blur(25px)"
-          } : {}}>
+          } : {
+            background: "linear-gradient(135deg, rgba(17, 24, 39, 0.98) 0%, rgba(31, 41, 55, 0.95) 50%, rgba(0, 0, 0, 0.9) 100%)",
+            backdropFilter: "blur(30px)"
+          }}>
             
             {/* Success Message */}
             {isSubmitted && (
