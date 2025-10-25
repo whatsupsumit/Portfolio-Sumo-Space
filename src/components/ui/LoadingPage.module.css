@@ -1,0 +1,77 @@
+/* LoadingPage.module.css */
+
+.loadingSlide {
+  animation: slideLoading 2s ease-in-out infinite;
+}
+
+.sparkle {
+  animation: sparkleSlide 1.5s linear infinite;
+}
+
+@keyframes slideLoading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes sparkleSlide {
+  0% {
+    transform: translateX(-400%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(400%);
+    opacity: 0;
+  }
+}
+
+/* Additional glow effects for the loading bar */
+.loadingSlide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(236, 72, 153, 0.8) 0%, 
+    rgba(147, 51, 234, 0.6) 25%, 
+    rgba(59, 130, 246, 0.6) 75%, 
+    rgba(34, 211, 238, 0.8) 100%);
+  border-radius: inherit;
+  filter: blur(4px);
+  opacity: 0.7;
+}
+
+.sparkle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: sparkleGlow 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleGlow {
+  0% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}

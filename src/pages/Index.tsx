@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sun, Moon, Send, CheckCircle } from "lucide-react";
+import { Send, CheckCircle, Github, Linkedin } from "lucide-react";
 import emailjs from '@emailjs/browser';
 import Lenis from 'lenis';
+import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
 
 const Index = () => {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -95,10 +96,16 @@ const Index = () => {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element && lenisRef.current) {
+      // Calculate proper offset based on section
+      const offset = -80;
+      
       lenisRef.current.scrollTo(element, {
-        offset: -80,
-        duration: theme === "dark" ? 1.6 : 1.2,
-        easing: (t) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+        offset: offset,
+        duration: theme === "dark" ? 1.8 : 1.4,
+        easing: (t) => {
+          // Smooth easeOutExpo easing for better scroll feel
+          return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        },
       });
     }
   };
@@ -129,7 +136,7 @@ const Index = () => {
 
   // Section tracking for active navigation
   useEffect(() => {
-    const sections = ['hero', 'about', 'projects', 'testimonials', 'contact'];
+    const sections = ['hero', 'about', 'testimonials', 'contact'];
     
     const observer = new IntersectionObserver(
       (entries) => {
@@ -349,55 +356,15 @@ const Index = () => {
         )}
       </div>
       
-      {/* Theme Toggle Button with Enhanced Animation */}
-      <div className="fixed top-4 right-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleTheme}
-          disabled={isTransitioning}
-          className={`rounded-full w-12 h-12 relative overflow-hidden group ${theme === "dark" 
-            ? "bg-gray-800/90 border-neon-pink/60 text-neon-pink hover:bg-neon-pink/20 hover:border-neon-pink" 
-            : "bg-white/95 border-pink-500/60 text-pink-600 hover:bg-pink-500/20 hover:border-pink-500 shadow-lg shadow-pink-500/25"} 
-            backdrop-blur-md transition-all duration-500 hover:scale-110`}
-          style={{
-            transform: isTransitioning ? "scale(1.2) rotate(180deg)" : "scale(1) rotate(0deg)",
-            transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)"
-          }}
-          aria-label="Toggle theme"
-        >
-          {/* Animated background ripple */}
-          <div className={`absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
-            theme === "dark" 
-              ? "bg-gradient-to-br from-neon-pink/20 to-neon-purple/20" 
-              : "bg-gradient-to-br from-pink-500/20 to-rose-500/20"
-          }`}></div>
-          
-          {/* Icon container with smooth transitions */}
-          <div className="relative z-10 flex items-center justify-center">
-            <Sun 
-              className={`absolute h-[1.4rem] w-[1.4rem] transition-all duration-500 ${
-                theme === "light" ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
-              }`} 
-            />
-            <Moon 
-              className={`absolute h-[1.4rem] w-[1.4rem] transition-all duration-500 ${
-                theme === "dark" ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
-              }`} 
-            />
-          </div>
-          
-          {/* Pulse effect when transitioning */}
-          {isTransitioning && (
-            <div className={`absolute inset-0 rounded-full animate-ping ${
-              theme === "dark" ? "bg-neon-pink/30" : "bg-pink-500/30"
-            }`}></div>
-          )}
-        </Button>
-      </div>
-
+      {/* 3D Theme Switch */}
+      <ThemeSwitch 
+        theme={theme}
+        onToggle={toggleTheme}
+        isTransitioning={isTransitioning}
+      />
+      
       {/* Cool Floating Navigation Menu */}
-      <div className="fixed left-6 top-1/2 transform -translate-y-1/2 z-40 hidden lg:block">
+      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40 hidden lg:block xl:left-6">
         <nav 
           className={`relative flex flex-col space-y-3 p-3 rounded-2xl backdrop-blur-lg transition-all duration-300 group/nav ${
             theme === "dark" 
@@ -422,7 +389,6 @@ const Index = () => {
             {[
               { id: 'hero', label: 'Home', icon: '🏠' },
               { id: 'about', label: 'About', icon: '👨‍💻' },
-              { id: 'projects', label: 'Projects', icon: '🚀' },
               { id: 'testimonials', label: 'Reviews', icon: '💬' },
               { id: 'contact', label: 'Contact', icon: '📧' }
             ].map((item, index) => {
@@ -430,7 +396,7 @@ const Index = () => {
               return (
                 <div key={item.id} className="relative group/item">
                   <button
-                    onClick={() => scrollToSection(item.id === 'hero' ? 'hero' : item.id)}
+                    onClick={() => scrollToSection(item.id)}
                     className={`relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 ${
                       isActive
                         ? theme === "dark"
@@ -632,7 +598,7 @@ const Index = () => {
                   font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
                 asChild
               >
-                <a href="https://drive.google.com/file/d/1CYsUqzBHIyLuik6GyhgyH2tdAvKsMB-O/view?usp=drive_link" target="_blank" rel="noopener noreferrer">
+                <a href="https://drive.google.com/file/d/1EFoAbuQdQUee3ce_pMqdtcgwTUj33EXV/view?usp=sharing" target="_blank" rel="noopener noreferrer">
                   <span className="relative z-10">Download Resume</span>
                   <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
                     ? "bg-gradient-to-r from-neon-blue/20 to-neon-cyan/20"
@@ -658,26 +624,60 @@ const Index = () => {
                   : "bg-gradient-to-r from-pink-600/20 to-rose-600/20"
                 } opacity-0 group-hover:opacity-100`}></div>
               </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                  ? "border-neon-cyan bg-transparent text-neon-cyan hover:bg-neon-cyan hover:text-black" 
+                  : "border-blue-500 bg-transparent text-blue-600 hover:bg-blue-500 hover:text-white shadow-lg shadow-blue-500/20"} 
+                  font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
+                asChild
+              >
+                <a href="https://www.linkedin.com/in/sumit-kumar-d3v/" target="_blank" rel="noopener noreferrer">
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Linkedin className="w-5 h-5" />
+                    LinkedIn
+                  </span>
+                  <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
+                    ? "bg-gradient-to-r from-neon-cyan/20 to-neon-blue/20"
+                    : "bg-gradient-to-r from-blue-500/20 to-sky-500/20"
+                  } opacity-0 group-hover:opacity-100`}></div>
+                </a>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className={`border-2 transition-all duration-500 ${theme === "dark" 
+                  ? "border-gray-400 bg-transparent text-gray-400 hover:bg-gray-400 hover:text-black" 
+                  : "border-gray-600 bg-transparent text-gray-700 hover:bg-gray-600 hover:text-white shadow-lg shadow-gray-600/20"} 
+                  font-semibold relative overflow-hidden group hover:scale-105 hover:-translate-y-1`}
+                asChild
+              >
+                <a href="https://github.com/whatsupsumit" target="_blank" rel="noopener noreferrer">
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Github className="w-5 h-5" />
+                    GitHub
+                  </span>
+                  <div className={`absolute inset-0 transition-all duration-500 ${theme === "dark" 
+                    ? "bg-gradient-to-r from-gray-400/20 to-gray-500/20"
+                    : "bg-gradient-to-r from-gray-600/20 to-gray-700/20"
+                  } opacity-0 group-hover:opacity-100`}></div>
+                </a>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* About Me & Tech Stack Section - MOVED DOWN */}
-      <section id="about" className={`container mx-auto px-4 py-32 mt-20 relative scroll-reveal ${
+      <section id="about" className={`container mx-auto px-4 lg:px-6 xl:px-4 py-32 mt-20 relative scroll-reveal ${
         theme === "light" ? "text-gray-800" : ""
       }`}>
         
-        {/* Section Number Indicator - Inspired by bjornflow */}
-        <div className={`fixed right-8 top-1/2 transform -translate-y-1/2 z-30 hidden xl:block ${
-          theme === "dark" ? "text-neon-cyan/60" : "text-pink-500/60"
-        } font-mono text-sm tracking-wider`}>
-          <div className="writing-mode-vertical text-orientation-mixed rotate-180">
-            ABT_ME_001
-          </div>
-        </div>
         
-        <div className="grid lg:grid-cols-2 gap-16 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 relative z-10 lg:ml-16 xl:ml-0">
           {/* About Me */}
           <div>
             <h2 className="text-3xl md:text-4xl font-michroma font-bold mb-8">
@@ -1211,14 +1211,7 @@ const Index = () => {
             )}
 
             <p className={theme === "dark" ? "text-gray-300 leading-relaxed" : "text-gray-700 leading-relaxed"}>
-              A passionate and creative Full-Stack Developer with a strong grip
-              on technologies like React, Node.js, PHP, and MongoDB. Loves
-              turning complex problems into simple, elegant solutions and
-              building fast, responsive, and visually appealing web
-              applications. Also an artist at heart — blending design with code
-              to create immersive digital experiences. From real-world
-              innovations to cloud-powered platforms, always focused on clean
-              architecture, user experience, and performance.
+              Passionate Full-Stack Developer & Open-Source Contributor with hands-on experience in frontend, backend, and automation. Skilled in technologies like React, Node.js, PHP, and MongoDB, with a growing expertise in Selenium testing and DevOps workflows. Strong foundation in Data Structures and Algorithms (DSA), ensuring optimized and scalable solutions. Loves blending creativity and logic — from crafting seamless user interfaces to designing robust server-side systems. Driven by innovation, open-source collaboration, and a commitment to clean, efficient, and high-performance code.
             </p>
           </div>
 
@@ -1232,7 +1225,7 @@ const Index = () => {
               </span>
             </h2>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-6">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
               {[
                 { name: "DSA", icon: "🧠" },
                 { name: "CSS3", icon: "🎨" },
@@ -1241,11 +1234,15 @@ const Index = () => {
                 { name: "React", icon: "⚛️" },
                 { name: "TypeScript", icon: "📘" },
                 { name: "Tailwind", icon: "🎨" },
+                { name: "Django", icon: "🐍" },
+                { name: "Selenium", icon: "🤖" },
+                { name: "System Design", icon: "🏗️" },
+                { name: "Docker", icon: "🐳" },
                 { name: "DevOps", icon: "⚙️" },
               ].map((tech, index) => (
                 <div
                   key={index}
-                  className={`flex flex-col items-center space-y-2 p-4 rounded-lg ${
+                  className={`flex flex-col items-center space-y-2 p-3 rounded-lg ${
                     theme === "dark" 
                       ? "bg-gray-800/30 border border-gray-700 hover:border-neon-blue/50" 
                       : "bg-gradient-to-br from-white/90 to-pink-50/80 border border-pink-200/60 hover:border-pink-400/60 shadow-lg shadow-pink-500/10 hover:shadow-pink-500/20 backdrop-blur-sm"
@@ -1255,14 +1252,14 @@ const Index = () => {
                     background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(252, 231, 243, 0.6) 100%)"
                   } : {}}
                 >
-                  <div className="text-3xl group-hover:scale-110 transition-transform duration-150">
+                  <div className="text-2xl group-hover:scale-110 transition-transform duration-150">
                     {tech.icon}
                   </div>
-                  <span className={`text-sm ${
+                  <span className={`text-xs ${
                     theme === "dark" 
                       ? "text-gray-300 group-hover:text-neon-blue" 
                       : "text-gray-700 group-hover:text-pink-600"
-                  } transition-colors font-medium`}>
+                  } transition-colors font-medium text-center`}>
                     {tech.name}
                   </span>
                 </div>
